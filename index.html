@@ -140,26 +140,35 @@
     </div>
 
     <!-- GAME HUD -->
-    <div id="game-hud" class="ui-layer top-0 left-0 w-full p-4 flex justify-between items-start hidden-layer">
-        <div class="sigma-panel px-6 py-3 rounded-md shadow-2xl pointer-events-auto flex items-center gap-4">
-            <div id="player-icon" class="w-12 h-12 rounded-full flex items-center justify-center border-2 text-2xl bg-gray-900">♟</div>
-            <div>
-                <h1 class="text-xl font-black tracking-widest neon-text" id="player-name">PLAYER</h1>
-                <p class="text-xs opacity-70" id="status-player">GILIRANMU</p>
+    <div id="game-hud" class="ui-layer top-0 left-0 w-full h-full pointer-events-none hidden-layer">
+        <!-- TOP PANELS -->
+        <div class="w-full p-4 flex justify-between items-start pointer-events-none">
+            <div class="sigma-panel px-6 py-3 rounded-md shadow-2xl pointer-events-auto flex items-center gap-4">
+                <div id="player-icon" class="w-12 h-12 rounded-full flex items-center justify-center border-2 text-2xl bg-gray-900">♟</div>
+                <div>
+                    <h1 class="text-xl font-black tracking-widest neon-text" id="player-name">PLAYER</h1>
+                    <p class="text-xs opacity-70" id="status-player">GILIRANMU</p>
+                </div>
             </div>
-        </div>
-        
-        <div class="sigma-panel px-6 py-3 rounded-md shadow-2xl pointer-events-auto flex items-center gap-4 flex-row-reverse text-right">
-            <div id="enemy-icon" class="w-12 h-12 rounded-full flex items-center justify-center border-2 text-2xl bg-gray-900">♙</div>
-            <div>
-                <h1 class="text-xl font-black tracking-widest blood-text" id="enemy-name">AI NEMESIS</h1>
-                <p class="text-xs opacity-70" id="status-ai">MENUNGGU</p>
+            
+            <div class="sigma-panel px-6 py-3 rounded-md shadow-2xl pointer-events-auto flex items-center gap-4 flex-row-reverse text-right">
+                <div id="enemy-icon" class="w-12 h-12 rounded-full flex items-center justify-center border-2 text-2xl bg-gray-900">♙</div>
+                <div>
+                    <h1 class="text-xl font-black tracking-widest blood-text" id="enemy-name">AI NEMESIS</h1>
+                    <p class="text-xs opacity-70" id="status-ai">MENUNGGU</p>
+                </div>
             </div>
         </div>
         
         <!-- Center Check Warning -->
-        <div id="check-warning" class="absolute top-20 left-1/2 transform -translate-x-1/2 text-red-500 font-black text-2xl tracking-widest animate-pulse hidden-layer">
+        <div id="check-warning" class="absolute top-24 left-1/2 transform -translate-x-1/2 text-red-500 font-black text-2xl tracking-widest animate-pulse hidden-layer">
             >> SKAK <<
+        </div>
+
+        <!-- UNDO / REDO CONTROLS -->
+        <div class="absolute bottom-8 right-8 flex gap-4 pointer-events-auto">
+            <button id="btn-undo" class="btn-sigma text-sm py-2 px-4 opacity-30 pointer-events-none" onclick="GameCore.undo()">◄ UNDO</button>
+            <button id="btn-redo" class="btn-sigma text-sm py-2 px-4 opacity-30 pointer-events-none" onclick="GameCore.redo()">REDO ►</button>
         </div>
     </div>
 
@@ -204,6 +213,55 @@
             'b': { 'p': '♟', 'n': '♞', 'b': '♝', 'r': '♜', 'q': '♛', 'k': '♚' }
         };
 
+        // --- SYNTHESIZER AUDIO ENGINE ---
+        const AudioSys = {
+            ctx: null,
+            init() {
+                if (!this.ctx) {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    this.ctx = new AudioContext();
+                }
+                if (this.ctx.state === 'suspended') this.ctx.resume();
+            },
+            play(type, freq, duration, vol) {
+                if (!this.ctx) return;
+                try {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = type;
+                    osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                    gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + duration);
+                } catch(e) {}
+            },
+            playUI() { this.play('sine', 800, 0.1, 0.1); },
+            playSelect() { this.play('sine', 1200, 0.05, 0.1); },
+            playMove() {
+                this.play('triangle', 300, 0.1, 0.1);
+                setTimeout(()=>this.play('triangle', 200, 0.1, 0.1), 50);
+            },
+            playCapture() {
+                this.play('sawtooth', 150, 0.3, 0.2);
+                this.play('square', 100, 0.3, 0.2);
+            },
+            playCheck() {
+                this.play('square', 600, 0.2, 0.2);
+                setTimeout(()=>this.play('square', 800, 0.4, 0.2), 100);
+            },
+            playFatality() {
+                this.play('sawtooth', 60, 2.0, 0.5);
+                this.play('square', 40, 2.0, 0.5);
+            }
+        };
+
+        // Otomatis aktifkan AudioContext pada klik pertama di manapun
+        window.addEventListener('click', () => AudioSys.init(), {once: true});
+        window.addEventListener('touchstart', () => AudioSys.init(), {once: true});
+
         const State = {
             turn: 'w',
             playerColor: 'w',
@@ -216,7 +274,10 @@
             floatingTexts: [],
             visualPieces: [],
             activeTheme: 'cyberpunk',
-            isCheck: false
+            isCheck: false,
+            // History State untuk Undo/Redo
+            history: [],
+            historyIndex: -1
         };
 
         // --- UI & MENUS ---
@@ -225,20 +286,24 @@
                 document.querySelectorAll('.menu-layer').forEach(el => el.classList.add('hidden-layer'));
             },
             showMainMenu() {
+                AudioSys.playUI();
                 this.hideAll();
                 document.getElementById('main-menu').classList.remove('hidden-layer');
                 document.getElementById('game-hud').classList.add('hidden-layer');
                 State.gameState = 'MENU';
             },
             showSideSelection() {
+                AudioSys.playUI();
                 this.hideAll();
                 document.getElementById('side-menu').classList.remove('hidden-layer');
             },
             showSettings() {
+                AudioSys.playUI();
                 this.hideAll();
                 document.getElementById('settings-menu').classList.remove('hidden-layer');
             },
             setTheme(themeName) {
+                AudioSys.playUI();
                 State.activeTheme = themeName;
                 const t = THEMES[themeName];
                 document.body.style.setProperty('--theme-glow', t.glow);
@@ -578,6 +643,7 @@
                     if (isFatalityCheck) {
                         // FATALITY SEQUENCE
                         State.invertColors = true; // Invert layar sejenak
+                        AudioSys.playFatality();
                         this.createExplosion(toX, toY, '#ff0000', "FATALITY!", true);
                         visualPiece.scale = 2.0;
                         await new Promise(r => setTimeout(r, 150));
@@ -585,6 +651,7 @@
                         await new Promise(r => setTimeout(r, 400));
                     } else {
                         // NORMAL IMPACT
+                        AudioSys.playCapture();
                         const dmg = PIECE_VALUES[targetPiece.piece.type] * MathUtils.random(0.8, 1.2);
                         const dmgText = Math.random() > 0.6 ? `CRIT! ${Math.floor(dmg*1.5)}` : `-${Math.floor(dmg)}`;
                         this.createExplosion(toX, toY, color, dmgText);
@@ -599,6 +666,7 @@
                     document.getElementById('cinematic-bar-top').style.transform = 'translateY(-100%)';
                     document.getElementById('cinematic-bar-bottom').style.transform = 'translateY(100%)';
                 } else {
+                    AudioSys.playMove();
                     visualPiece.logicalX = toX; visualPiece.logicalY = toY;
                     await new Promise(r => setTimeout(r, 150));
                 }
@@ -613,6 +681,7 @@
         // --- GAME CORE LOGIC ---
         const GameCore = {
             initGame(colorChoice) {
+                AudioSys.playUI();
                 MenuSystem.hideAll();
                 document.getElementById('game-hud').classList.remove('hidden-layer');
                 
@@ -621,6 +690,8 @@
                 State.turn = 'w';
                 State.gameState = 'IDLE';
                 State.isCheck = false;
+                State.history = [];
+                State.historyIndex = -1;
                 
                 // Atur UI Icons
                 const pColorHex = State.playerColor === 'w' ? '#00ffff' : '#ff0000';
@@ -635,11 +706,89 @@
                 Engine.setupBoard();
                 this.syncVisualPieces();
                 this.updateHUD();
+                this.saveState(); // Simpan state awal
 
                 if (State.playerColor === 'b') {
                     // Jika player Hitam, AI (Putih) jalan duluan
                     setTimeout(() => this.processAITurn(), 800);
                 }
+            },
+
+            // Time Travel Engine (Undo/Redo)
+            saveState() {
+                // Potong history Redo jika pemain membuat pergerakan baru setelah Undo
+                if (State.historyIndex < State.history.length - 1) {
+                    State.history = State.history.slice(0, State.historyIndex + 1);
+                }
+                State.history.push({
+                    board: JSON.stringify(Engine.board),
+                    turn: State.turn,
+                    isCheck: State.isCheck
+                });
+                State.historyIndex = State.history.length - 1;
+                this.updateUndoRedoUI();
+            },
+
+            restoreState(historyState) {
+                Engine.board = JSON.parse(historyState.board);
+                State.turn = historyState.turn;
+                State.isCheck = historyState.isCheck;
+                State.gameState = 'IDLE';
+                State.selectedSquare = null;
+                State.validMoves = [];
+                this.syncVisualPieces(); // Snap instan ke posisi logic
+                this.updateHUD();
+                this.updateUndoRedoUI();
+            },
+
+            undo() {
+                if (State.gameState === 'ANIMATING') return;
+                AudioSys.playUI();
+                // Cari giliran pemain mundur ke belakang (melewati AI)
+                let targetIndex = State.historyIndex - 1;
+                while(targetIndex >= 0 && State.history[targetIndex].turn !== State.playerColor) {
+                    targetIndex--;
+                }
+                if (targetIndex >= 0) {
+                    State.historyIndex = targetIndex;
+                    document.getElementById('game-over-screen').classList.add('hidden-layer');
+                    this.restoreState(State.history[State.historyIndex]);
+                }
+            },
+
+            redo() {
+                if (State.gameState === 'ANIMATING') return;
+                AudioSys.playUI();
+                // Cari giliran pemain maju ke depan
+                let targetIndex = State.historyIndex + 1;
+                while(targetIndex < State.history.length && State.history[targetIndex].turn !== State.playerColor) {
+                    targetIndex++;
+                }
+                if (targetIndex < State.history.length) {
+                    State.historyIndex = targetIndex;
+                    document.getElementById('game-over-screen').classList.add('hidden-layer');
+                    this.restoreState(State.history[State.historyIndex]);
+                }
+            },
+
+            updateUndoRedoUI() {
+                const btnUndo = document.getElementById('btn-undo');
+                const btnRedo = document.getElementById('btn-redo');
+                // Cek ketersediaan Undo
+                let canUndo = false;
+                for (let i = State.historyIndex - 1; i >= 0; i--) {
+                    if (State.history[i].turn === State.playerColor) { canUndo = true; break; }
+                }
+                btnUndo.style.opacity = canUndo ? "1" : "0.3";
+                btnUndo.style.pointerEvents = canUndo ? "auto" : "none";
+
+                // Cek ketersediaan Redo
+                let canRedo = false;
+                for (let i = State.historyIndex + 1; i < State.history.length; i++) {
+                    if (State.history[i].turn === State.playerColor) { canRedo = true; break; }
+                }
+                btnRedo.style.opacity = canRedo ? "1" : "0.3";
+                btnRedo.style.pointerEvents = canRedo ? "auto" : "none";
             },
 
             syncVisualPieces() {
@@ -659,16 +808,20 @@
                 
                 // Checkmate / Check detection
                 State.isCheck = Engine.isInCheck(State.turn);
+                if (State.isCheck) AudioSys.playCheck(); // Mainkan Suara Peringatan
+
                 const allLegalMoves = Engine.getAllLegalMoves(State.turn);
                 
                 if (allLegalMoves.length === 0) {
                     State.gameState = 'GAME_OVER';
+                    this.saveState(); // Simpan kondisi terakhir kematian
                     this.triggerGameOver(State.isCheck);
                     return;
                 }
 
                 State.gameState = 'IDLE';
                 this.updateHUD();
+                this.saveState(); // Simpan State Histori untuk setiap turn yang sah
 
                 if (State.turn !== State.playerColor) {
                     setTimeout(() => this.processAITurn(), 600);
@@ -776,6 +929,7 @@
 
             const piece = Engine.getPiece(x, y);
             if (piece && piece.color === State.playerColor) {
+                AudioSys.playSelect(); // Suara pemilihan bidak
                 State.selectedSquare = {x, y};
                 State.validMoves = Engine.getLegalMoves(x, y); // Gunakan LEGAL moves
                 Renderer.triggerScreenShake(3); 
