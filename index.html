@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sigma Chess RPG</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background-color: #050505; 
+            color: #fff;
+            overflow: hidden;
+            font-family: 'Courier New', Courier, monospace;
+            touch-action: none;
+            user-select: none;
+        }
+        #gameCanvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+        .ui-layer {
+            position: absolute;
+            pointer-events: none;
+            z-index: 10;
+        }
+        .menu-layer {
+            position: absolute;
+            inset: 0;
+            background: rgba(5, 5, 5, 0.95);
+            backdrop-filter: blur(15px);
+            z-index: 50;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            pointer-events: auto;
+        }
+        .hidden-layer { display: none !important; }
+        
+        /* Glitch & Glow Effects */
+        .neon-text { text-shadow: 0 0 5px var(--theme-glow), 0 0 10px var(--theme-glow-dim); }
+        .blood-text { text-shadow: 0 0 10px rgba(255, 0, 0, 0.8), 0 0 20px rgba(255, 0, 0, 0.4); }
+        .fatality-text { 
+            font-size: 5rem; font-weight: 900; color: #ff0000;
+            text-shadow: 0 0 20px #ff0000, 4px 4px 0px #880000, -4px -4px 0px #330000;
+            letter-spacing: 10px;
+            animation: shake 0.5s infinite;
+        }
+        
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-1deg); }
+            20% { transform: translate(-3px, 0px) rotate(1deg); }
+            30% { transform: translate(3px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            50% { transform: translate(-1px, 2px) rotate(-1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translate(3px, 1px) rotate(-1deg); }
+            80% { transform: translate(-1px, -1px) rotate(1deg); }
+            90% { transform: translate(1px, 2px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
+        }
+
+        @keyframes pulse-border {
+            0% { border-color: rgba(255, 255, 255, 0.1); }
+            50% { border-color: var(--theme-glow); }
+            100% { border-color: rgba(255, 255, 255, 0.1); }
+        }
+        .sigma-panel {
+            background: rgba(10, 10, 15, 0.9);
+            border: 1px solid var(--theme-glow-dim);
+            backdrop-filter: blur(12px);
+            animation: pulse-border 4s infinite;
+        }
+        .btn-sigma {
+            background: transparent;
+            border: 2px solid var(--theme-glow);
+            color: var(--theme-text);
+            padding: 15px 40px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .btn-sigma:hover {
+            background: var(--theme-glow);
+            color: #000;
+            box-shadow: 0 0 20px var(--theme-glow);
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body style="--theme-glow: #00ffff; --theme-glow-dim: rgba(0,255,255,0.3); --theme-text: #00ffff;">
+
+    <!-- MAIN MENU -->
+    <div id="main-menu" class="menu-layer">
+        <h1 class="text-6xl font-black mb-2 tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-600" style="filter: drop-shadow(0 0 10px rgba(0,255,255,0.5))">SIGMA CHESS</h1>
+        <h2 class="text-xl text-red-500 font-bold mb-12 tracking-widest blood-text">FATALITY EDITION</h2>
+        
+        <div class="space-y-6 flex flex-col w-64">
+            <button class="btn-sigma" onclick="MenuSystem.showSideSelection()">PLAY</button>
+            <button class="btn-sigma" onclick="MenuSystem.showSettings()" style="border-color:#aaa; color:#aaa;">SETTINGS</button>
+        </div>
+    </div>
+
+    <!-- SIDE SELECTION -->
+    <div id="side-menu" class="menu-layer hidden-layer">
+        <h2 class="text-3xl font-bold mb-8 text-white tracking-widest neon-text">CHOOSE FACTION</h2>
+        <div class="flex gap-6">
+            <button class="btn-sigma" style="--theme-glow:#fff; --theme-text:#fff" onclick="GameCore.initGame('w')">WHITE</button>
+            <button class="btn-sigma" style="--theme-glow:#ff3333; --theme-text:#ff3333" onclick="GameCore.initGame('b')">BLACK</button>
+        </div>
+        <button class="mt-8 text-gray-500 hover:text-white transition" onclick="GameCore.initGame('random')">[ RANDOM ]</button>
+        <button class="mt-12 text-sm text-cyan-500 hover:text-cyan-300" onclick="MenuSystem.showMainMenu()"><< BACK</button>
+    </div>
+
+    <!-- SETTINGS -->
+    <div id="settings-menu" class="menu-layer hidden-layer">
+        <h2 class="text-3xl font-bold mb-8 text-white tracking-widest">SYSTEM OVERRIDE</h2>
+        <div class="space-y-4 flex flex-col w-80">
+            <p class="text-sm text-gray-400 text-center">SKIN / THEME</p>
+            <button class="btn-sigma" style="--theme-glow:#00ffff; --theme-text:#00ffff" onclick="MenuSystem.setTheme('cyberpunk')">CYBERPUNK</button>
+            <button class="btn-sigma" style="--theme-glow:#ff0000; --theme-text:#ff0000" onclick="MenuSystem.setTheme('bloodmoon')">BLOOD MOON</button>
+        </div>
+        <button class="mt-12 text-sm text-gray-400 hover:text-white" onclick="MenuSystem.showMainMenu()"><< BACK</button>
+    </div>
+
+    <!-- GAME OVER / FATALITY SCREEN -->
+    <div id="game-over-screen" class="menu-layer hidden-layer bg-black/90">
+        <h1 id="fatality-title" class="fatality-text mb-4">SKAKMAT</h1>
+        <p id="winner-text" class="text-2xl font-bold text-white tracking-widest mb-12">PLAYER WINS</p>
+        <button class="btn-sigma" onclick="MenuSystem.showMainMenu()">RETURN TO BASE</button>
+    </div>
+
+    <!-- GAME HUD -->
+    <div id="game-hud" class="ui-layer top-0 left-0 w-full p-4 flex justify-between items-start hidden-layer">
+        <div class="sigma-panel px-6 py-3 rounded-md shadow-2xl pointer-events-auto flex items-center gap-4">
+            <div id="player-icon" class="w-12 h-12 rounded-full flex items-center justify-center border-2 text-2xl bg-gray-900">♟</div>
+            <div>
+                <h1 class="text-xl font-black tracking-widest neon-text" id="player-name">PLAYER</h1>
+                <p class="text-xs opacity-70" id="status-player">GILIRANMU</p>
+            </div>
+        </div>
+        
+        <div class="sigma-panel px-6 py-3 rounded-md shadow-2xl pointer-events-auto flex items-center gap-4 flex-row-reverse text-right">
+            <div id="enemy-icon" class="w-12 h-12 rounded-full flex items-center justify-center border-2 text-2xl bg-gray-900">♙</div>
+            <div>
+                <h1 class="text-xl font-black tracking-widest blood-text" id="enemy-name">AI NEMESIS</h1>
+                <p class="text-xs opacity-70" id="status-ai">MENUNGGU</p>
+            </div>
+        </div>
+        
+        <!-- Center Check Warning -->
+        <div id="check-warning" class="absolute top-20 left-1/2 transform -translate-x-1/2 text-red-500 font-black text-2xl tracking-widest animate-pulse hidden-layer">
+            >> SKAK <<
+        </div>
+    </div>
+
+    <div id="cinematic-bar-top" class="ui-layer top-0 left-0 w-full h-24 bg-black transition-transform duration-200 -translate-y-full"></div>
+    <div id="cinematic-bar-bottom" class="ui-layer bottom-0 left-0 w-full h-24 bg-black transition-transform duration-200 translate-y-full"></div>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <script>
+        /**
+         * =====================================================================
+         * SIGMA CHESS RPG V2 - FATALITY EDITION
+         * =====================================================================
+         */
+
+        const MathUtils = {
+            lerp: (a, b, t) => a + (b - a) * t,
+            distance: (x1, y1, x2, y2) => Math.sqrt((x2-x1)**2 + (y2-y1)**2),
+            random: (min, max) => Math.random() * (max - min) + min
+        };
+
+        const THEMES = {
+            cyberpunk: {
+                darkSquare: '#121218', lightSquare: '#1e1e28',
+                highlight: 'rgba(0, 255, 255, 0.4)',
+                playerText: '#00ffff', enemyText: '#ff3333',
+                particlePlayer: '#00ffff', particleEnemy: '#ff0000',
+                glow: '#00ffff', glowDim: 'rgba(0,255,255,0.3)'
+            },
+            bloodmoon: {
+                darkSquare: '#1a0505', lightSquare: '#330a0a',
+                highlight: 'rgba(255, 50, 50, 0.4)',
+                playerText: '#ffaaaa', enemyText: '#ff0000',
+                particlePlayer: '#ffaaaa', particleEnemy: '#880000',
+                glow: '#ff0000', glowDim: 'rgba(255,0,0,0.3)'
+            }
+        };
+
+        const PIECE_VALUES = { 'p': 100, 'n': 300, 'b': 300, 'r': 500, 'q': 900, 'k': 9999 };
+        const PIECE_SYMBOLS = {
+            'w': { 'p': '♙', 'n': '♘', 'b': '♗', 'r': '♖', 'q': '♕', 'k': '♔' },
+            'b': { 'p': '♟', 'n': '♞', 'b': '♝', 'r': '♜', 'q': '♛', 'k': '♚' }
+        };
+
+        const State = {
+            turn: 'w',
+            playerColor: 'w',
+            gameState: 'MENU', // MENU, IDLE, ANIMATING, GAME_OVER
+            selectedSquare: null,
+            validMoves: [],
+            camera: { x: 0, y: 0, shakeX: 0, shakeY: 0, shakeIntensity: 0 },
+            invertColors: false, // For hit-stop effect
+            particles: [],
+            floatingTexts: [],
+            visualPieces: [],
+            activeTheme: 'cyberpunk',
+            isCheck: false
+        };
+
+        // --- UI & MENUS ---
+        const MenuSystem = {
+            hideAll() {
+                document.querySelectorAll('.menu-layer').forEach(el => el.classList.add('hidden-layer'));
+            },
+            showMainMenu() {
+                this.hideAll();
+                document.getElementById('main-menu').classList.remove('hidden-layer');
+                document.getElementById('game-hud').classList.add('hidden-layer');
+                State.gameState = 'MENU';
+            },
+            showSideSelection() {
+                this.hideAll();
+                document.getElementById('side-menu').classList.remove('hidden-layer');
+            },
+            showSettings() {
+                this.hideAll();
+                document.getElementById('settings-menu').classList.remove('hidden-layer');
+            },
+            setTheme(themeName) {
+                State.activeTheme = themeName;
+                const t = THEMES[themeName];
+                document.body.style.setProperty('--theme-glow', t.glow);
+                document.body.style.setProperty('--theme-glow-dim', t.glowDim);
+                document.body.style.setProperty('--theme-text', t.glow);
+            }
+        };
+
+        // --- LOGIKA CATUR LEGAL (SKAK & SKAKMAT) ---
+        class ChessEngine {
+            constructor() {
+                this.board = Array(8).fill(null).map(() => Array(8).fill(null));
+            }
+
+            setupBoard() {
+                this.board = Array(8).fill(null).map(() => Array(8).fill(null));
+                const order = ['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'];
+                for (let i = 0; i < 8; i++) {
+                    this.board[0][i] = { color: 'b', type: order[i] };
+                    this.board[1][i] = { color: 'b', type: 'p' };
+                    this.board[6][i] = { color: 'w', type: 'p' };
+                    this.board[7][i] = { color: 'w', type: order[i] };
+                }
+            }
+
+            getPiece(x, y) {
+                if (x < 0 || x > 7 || y < 0 || y > 7) return null;
+                return this.board[y][x];
+            }
+
+            // Dapatkan langkah pseudo-legal (mengabaikan aturan Skak)
+            getPseudoMoves(x, y, boardState = this.board) {
+                const piece = boardState[y][x];
+                if (!piece) return [];
+                const moves = [];
+                const color = piece.color;
+                const dir = color === 'w' ? -1 : 1;
+
+                const addIfValid = (nx, ny, canCapture = true, mustCapture = false) => {
+                    if (nx < 0 || nx > 7 || ny < 0 || ny > 7) return false;
+                    const target = boardState[ny][nx];
+                    if (target) {
+                        if (target.color !== color && canCapture) moves.push({ x: nx, y: ny, target });
+                        return false;
+                    } else if (!mustCapture) {
+                        moves.push({ x: nx, y: ny, target: null });
+                        return true;
+                    }
+                    return false;
+                };
+
+                const slide = (dx, dy) => {
+                    let nx = x + dx, ny = y + dy;
+                    while (addIfValid(nx, ny)) { nx += dx; ny += dy; }
+                };
+
+                switch (piece.type) {
+                    case 'p':
+                        if (addIfValid(x, y + dir, false, false)) {
+                            if ((color === 'w' && y === 6) || (color === 'b' && y === 1)) {
+                                addIfValid(x, y + dir * 2, false, false);
+                            }
+                        }
+                        addIfValid(x - 1, y + dir, true, true);
+                        addIfValid(x + 1, y + dir, true, true);
+                        break;
+                    case 'n':
+                        [[-1,-2],[1,-2],[-2,-1],[2,-1],[-1,2],[1,2],[-2,1],[2,1]].forEach(([dx, dy]) => addIfValid(x+dx, y+dy));
+                        break;
+                    case 'b':
+                        [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(([dx, dy]) => slide(dx, dy));
+                        break;
+                    case 'r':
+                        [[0,-1],[0,1],[-1,0],[1,0]].forEach(([dx, dy]) => slide(dx, dy));
+                        break;
+                    case 'q':
+                        [[-1,-1],[1,-1],[-1,1],[1,1],[0,-1],[0,1],[-1,0],[1,0]].forEach(([dx, dy]) => slide(dx, dy));
+                        break;
+                    case 'k':
+                        [[-1,-1],[1,-1],[-1,1],[1,1],[0,-1],[0,1],[-1,0],[1,0]].forEach(([dx, dy]) => addIfValid(x+dx, y+dy));
+                        break;
+                }
+                return moves;
+            }
+
+            // Deteksi apakah sebuah kotak diserang oleh warna musuh
+            isSquareAttacked(targetX, targetY, attackerColor, boardState = this.board) {
+                for (let y = 0; y < 8; y++) {
+                    for (let x = 0; x < 8; x++) {
+                        const piece = boardState[y][x];
+                        if (piece && piece.color === attackerColor) {
+                            // Untuk pion, hitung attack murni (diagonal), bukan pseudo-moves biasa
+                            if (piece.type === 'p') {
+                                const dir = attackerColor === 'w' ? -1 : 1;
+                                if ((targetY === y + dir) && (targetX === x - 1 || targetX === x + 1)) return true;
+                            } else if (piece.type === 'k') {
+                                // Raja serang 1 kotak sekitar
+                                if (Math.abs(targetX - x) <= 1 && Math.abs(targetY - y) <= 1) return true;
+                            } else {
+                                const moves = this.getPseudoMoves(x, y, boardState);
+                                if (moves.some(m => m.x === targetX && m.y === targetY)) return true;
+                            }
+                        }
+                    }
+                }
+                return false;
+            }
+
+            isInCheck(color, boardState = this.board) {
+                let kx = -1, ky = -1;
+                for (let y = 0; y < 8; y++) {
+                    for (let x = 0; x < 8; x++) {
+                        const p = boardState[y][x];
+                        if (p && p.type === 'k' && p.color === color) {
+                            kx = x; ky = y; break;
+                        }
+                    }
+                }
+                if (kx === -1) return false;
+                return this.isSquareAttacked(kx, ky, color === 'w' ? 'b' : 'w', boardState);
+            }
+
+            // Langkah LEGAL: Pseudo-moves yang tidak membuat raja sendiri dalam status Skak
+            getLegalMoves(x, y) {
+                const piece = this.getPiece(x, y);
+                if (!piece) return [];
+                const pseudoMoves = this.getPseudoMoves(x, y);
+                const legalMoves = [];
+
+                for (let move of pseudoMoves) {
+                    // Simulasi langkah
+                    const targetPieceOrig = this.board[move.y][move.x];
+                    this.board[move.y][move.x] = piece;
+                    this.board[y][x] = null;
+
+                    if (!this.isInCheck(piece.color)) {
+                        legalMoves.push(move);
+                    }
+
+                    // Undo simulasi
+                    this.board[y][x] = piece;
+                    this.board[move.y][move.x] = targetPieceOrig;
+                }
+                return legalMoves;
+            }
+
+            getAllLegalMoves(color) {
+                let moves = [];
+                for (let y = 0; y < 8; y++) {
+                    for (let x = 0; x < 8; x++) {
+                        const p = this.getPiece(x, y);
+                        if (p && p.color === color) {
+                            const pMoves = this.getLegalMoves(x, y);
+                            pMoves.forEach(m => moves.push({from: {x,y}, to: m}));
+                        }
+                    }
+                }
+                return moves;
+            }
+
+            movePiece(fromX, fromY, toX, toY) {
+                const piece = this.board[fromY][fromX];
+                this.board[toY][toX] = piece;
+                this.board[fromY][fromX] = null;
+                if (piece.type === 'p' && (toY === 0 || toY === 7)) piece.type = 'q';
+            }
+        }
+
+        const Engine = new ChessEngine();
+
+        // --- RENDERER VISUAL (DENGAN ROTASI BOARD OPTIONAL) ---
+        class VisualPiece {
+            constructor(x, y, logicalPiece) {
+                this.logicalX = x; this.logicalY = y;
+                this.renderX = x; this.renderY = y;
+                this.piece = logicalPiece;
+                this.scale = 1; this.opacity = 1;
+                this.isDead = false; this.isAttacking = false;
+            }
+
+            update() {
+                if (this.isDead) {
+                    this.scale = MathUtils.lerp(this.scale, 0, 0.15); // Disappear faster
+                    this.opacity = MathUtils.lerp(this.opacity, 0, 0.15);
+                    return;
+                }
+                if (!this.isAttacking) {
+                    this.renderX = MathUtils.lerp(this.renderX, this.logicalX, 0.25);
+                    this.renderY = MathUtils.lerp(this.renderY, this.logicalY, 0.25);
+                }
+            }
+
+            draw(ctx, cellSize, offsetX, offsetY) {
+                if (this.opacity < 0.05) return;
+                
+                // Rotasi visual jika pemain pakai Hitam
+                let visualX = State.playerColor === 'w' ? this.renderX : 7 - this.renderX;
+                let visualY = State.playerColor === 'w' ? this.renderY : 7 - this.renderY;
+
+                const px = offsetX + visualX * cellSize + cellSize / 2;
+                const py = offsetY + visualY * cellSize + cellSize / 2;
+
+                ctx.save();
+                ctx.translate(px, py);
+                ctx.scale(this.scale, this.scale);
+                ctx.globalAlpha = this.opacity;
+
+                ctx.beginPath();
+                ctx.ellipse(0, cellSize*0.35, cellSize*0.25, cellSize*0.08, 0, 0, Math.PI*2);
+                ctx.fillStyle = 'rgba(0,0,0,0.6)';
+                ctx.fill();
+
+                ctx.font = `bold ${cellSize * 0.7}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                
+                const isWhite = this.piece.color === 'w';
+                const theme = THEMES[State.activeTheme];
+                ctx.fillStyle = isWhite ? '#ffffff' : '#222222';
+                
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = isWhite ? theme.glow : '#ff0000';
+                
+                if (!isWhite) {
+                    ctx.strokeStyle = '#ff3333';
+                    ctx.lineWidth = 2;
+                    ctx.strokeText(PIECE_SYMBOLS[this.piece.color][this.piece.type], 0, 0);
+                }
+                ctx.fillText(PIECE_SYMBOLS[this.piece.color][this.piece.type], 0, 0);
+                ctx.restore();
+            }
+        }
+
+        class Particle {
+            constructor(x, y, color, isText = false, text = "") {
+                this.x = x; this.y = y;
+                // Ledakan lebih agresif
+                this.vx = MathUtils.random(-20, 20);
+                this.vy = MathUtils.random(-20, 20);
+                this.life = 1.0;
+                this.color = color;
+                this.size = MathUtils.random(4, 12);
+                this.isText = isText;
+                this.text = text;
+            }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.vy += 0.8; // Gravity kuat
+                // Partikel hilang sangat cepat untuk cegah lag
+                this.life -= MathUtils.random(0.06, 0.1); 
+                if(this.isText) { this.vy -= 1.5; this.life -= 0.02; }
+            }
+            draw(ctx) {
+                if (this.life <= 0) return;
+                ctx.globalAlpha = this.life;
+                if (this.isText) {
+                    ctx.font = '900 35px "Courier New"';
+                    ctx.fillStyle = this.color;
+                    ctx.textAlign = 'center';
+                    ctx.shadowBlur = 15;
+                    ctx.shadowColor = this.color;
+                    ctx.strokeStyle = '#000';
+                    ctx.lineWidth = 4;
+                    ctx.strokeText(this.text, this.x, this.y);
+                    ctx.fillText(this.text, this.x, this.y);
+                } else {
+                    ctx.fillStyle = this.color;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size, 0, Math.PI*2);
+                    ctx.fill();
+                }
+                ctx.globalAlpha = 1.0;
+            }
+        }
+
+        const Renderer = {
+            canvas: document.getElementById('gameCanvas'),
+            ctx: document.getElementById('gameCanvas').getContext('2d', { alpha: false }),
+            cellSize: 0, offsetX: 0, offsetY: 0,
+
+            resize() {
+                const dpr = window.devicePixelRatio || 1;
+                this.canvas.width = window.innerWidth * dpr;
+                this.canvas.height = window.innerHeight * dpr;
+                this.ctx.scale(dpr, dpr);
+                const minDim = Math.min(window.innerWidth, window.innerHeight);
+                this.cellSize = Math.floor((minDim * 0.85) / 8);
+                this.offsetX = (window.innerWidth - (this.cellSize * 8)) / 2;
+                this.offsetY = (window.innerHeight - (this.cellSize * 8)) / 2 + 20;
+            },
+
+            triggerScreenShake(intensity = 15) { State.camera.shakeIntensity = intensity; },
+
+            createExplosion(logicalX, logicalY, color, damageText, isFatality = false) {
+                let vx = State.playerColor === 'w' ? logicalX : 7 - logicalX;
+                let vy = State.playerColor === 'w' ? logicalY : 7 - logicalY;
+                const px = this.offsetX + vx * this.cellSize + this.cellSize/2;
+                const py = this.offsetY + vy * this.cellSize + this.cellSize/2;
+                
+                const count = isFatality ? 80 : 25; // Partikel lebih banyak jika fatality
+                for(let i=0; i<count; i++) {
+                    State.particles.push(new Particle(px, py, color));
+                }
+                if (damageText) {
+                    State.particles.push(new Particle(px, py - 30, color, true, damageText));
+                }
+                this.triggerScreenShake(isFatality ? 30 : 15);
+            },
+
+            // ANIMASI BATTLE SADIS
+            async executeMoveAnimation(visualPiece, toX, toY, targetPiece, isFatalityCheck = false) {
+                State.gameState = 'ANIMATING';
+                
+                if (targetPiece) {
+                    document.getElementById('cinematic-bar-top').style.transform = 'translateY(0)';
+                    document.getElementById('cinematic-bar-bottom').style.transform = 'translateY(0)';
+                    visualPiece.isAttacking = true;
+                    
+                    // Anticipation mundur jauh
+                    const dx = toX - visualPiece.logicalX;
+                    const dy = toY - visualPiece.logicalY;
+                    const angle = Math.atan2(dy, dx);
+                    visualPiece.renderX -= Math.cos(angle) * 1.5;
+                    visualPiece.renderY -= Math.sin(angle) * 1.5;
+                    await new Promise(r => setTimeout(r, 250));
+
+                    // DASH KILAT
+                    visualPiece.renderX = toX;
+                    visualPiece.renderY = toY;
+                    await new Promise(r => setTimeout(r, 50));
+
+                    // IMPACT & FATALITY LOGIC
+                    const theme = THEMES[State.activeTheme];
+                    const color = targetPiece.piece.color === 'w' ? theme.particlePlayer : theme.particleEnemy;
+                    
+                    if (isFatalityCheck) {
+                        // FATALITY SEQUENCE
+                        State.invertColors = true; // Invert layar sejenak
+                        this.createExplosion(toX, toY, '#ff0000', "FATALITY!", true);
+                        visualPiece.scale = 2.0;
+                        await new Promise(r => setTimeout(r, 150));
+                        State.invertColors = false;
+                        await new Promise(r => setTimeout(r, 400));
+                    } else {
+                        // NORMAL IMPACT
+                        const dmg = PIECE_VALUES[targetPiece.piece.type] * MathUtils.random(0.8, 1.2);
+                        const dmgText = Math.random() > 0.6 ? `CRIT! ${Math.floor(dmg*1.5)}` : `-${Math.floor(dmg)}`;
+                        this.createExplosion(toX, toY, color, dmgText);
+                        visualPiece.scale = 1.4;
+                    }
+                    
+                    targetPiece.isDead = true;
+                    await new Promise(r => setTimeout(r, 200)); // Hit-stop
+                    
+                    visualPiece.isAttacking = false;
+                    visualPiece.scale = 1;
+                    document.getElementById('cinematic-bar-top').style.transform = 'translateY(-100%)';
+                    document.getElementById('cinematic-bar-bottom').style.transform = 'translateY(100%)';
+                } else {
+                    visualPiece.logicalX = toX; visualPiece.logicalY = toY;
+                    await new Promise(r => setTimeout(r, 150));
+                }
+
+                // Update Engine & Next Turn
+                Engine.movePiece(visualPiece.piece.logicalX_old, visualPiece.piece.logicalY_old, toX, toY);
+                GameCore.syncVisualPieces();
+                GameCore.nextTurn();
+            }
+        };
+
+        // --- GAME CORE LOGIC ---
+        const GameCore = {
+            initGame(colorChoice) {
+                MenuSystem.hideAll();
+                document.getElementById('game-hud').classList.remove('hidden-layer');
+                
+                if (colorChoice === 'random') colorChoice = Math.random() > 0.5 ? 'w' : 'b';
+                State.playerColor = colorChoice;
+                State.turn = 'w';
+                State.gameState = 'IDLE';
+                State.isCheck = false;
+                
+                // Atur UI Icons
+                const pColorHex = State.playerColor === 'w' ? '#00ffff' : '#ff0000';
+                const eColorHex = State.playerColor === 'w' ? '#ff0000' : '#00ffff';
+                document.getElementById('player-icon').innerText = State.playerColor === 'w' ? '♙' : '♟';
+                document.getElementById('player-icon').style.borderColor = pColorHex;
+                document.getElementById('player-icon').style.color = pColorHex;
+                document.getElementById('enemy-icon').innerText = State.playerColor === 'w' ? '♟' : '♙';
+                document.getElementById('enemy-icon').style.borderColor = eColorHex;
+                document.getElementById('enemy-icon').style.color = eColorHex;
+
+                Engine.setupBoard();
+                this.syncVisualPieces();
+                this.updateHUD();
+
+                if (State.playerColor === 'b') {
+                    // Jika player Hitam, AI (Putih) jalan duluan
+                    setTimeout(() => this.processAITurn(), 800);
+                }
+            },
+
+            syncVisualPieces() {
+                State.visualPieces = [];
+                for (let y = 0; y < 8; y++) {
+                    for (let x = 0; x < 8; x++) {
+                        const piece = Engine.getPiece(x, y);
+                        if (piece) State.visualPieces.push(new VisualPiece(x, y, piece));
+                    }
+                }
+            },
+
+            nextTurn() {
+                State.turn = State.turn === 'w' ? 'b' : 'w';
+                State.selectedSquare = null;
+                State.validMoves = [];
+                
+                // Checkmate / Check detection
+                State.isCheck = Engine.isInCheck(State.turn);
+                const allLegalMoves = Engine.getAllLegalMoves(State.turn);
+                
+                if (allLegalMoves.length === 0) {
+                    State.gameState = 'GAME_OVER';
+                    this.triggerGameOver(State.isCheck);
+                    return;
+                }
+
+                State.gameState = 'IDLE';
+                this.updateHUD();
+
+                if (State.turn !== State.playerColor) {
+                    setTimeout(() => this.processAITurn(), 600);
+                }
+            },
+
+            triggerGameOver(isCheckmate) {
+                const isPlayerWin = State.turn !== State.playerColor; // Yg tidak punya move yg kalah
+                
+                setTimeout(() => {
+                    document.getElementById('game-over-screen').classList.remove('hidden-layer');
+                    if (isCheckmate) {
+                        document.getElementById('fatality-title').innerText = "SKAKMAT";
+                        document.getElementById('winner-text').innerText = isPlayerWin ? ">> PLAYER WINS <<" : ">> AI NEMESIS WINS <<";
+                        document.getElementById('winner-text').style.color = isPlayerWin ? "#00ffff" : "#ff0000";
+                    } else {
+                        document.getElementById('fatality-title').innerText = "STALEMATE";
+                        document.getElementById('winner-text').innerText = "DRAW / SERI";
+                        document.getElementById('winner-text').style.color = "#aaaaaa";
+                    }
+                }, 1000); // Tunggu sisa animasi selesai
+            },
+
+            updateHUD() {
+                const statusP = document.getElementById('status-player');
+                const statusAI = document.getElementById('status-ai');
+                const checkWarn = document.getElementById('check-warning');
+                
+                if (State.isCheck) checkWarn.classList.remove('hidden-layer');
+                else checkWarn.classList.add('hidden-layer');
+
+                if (State.turn === State.playerColor) {
+                    statusP.innerText = ">> GILIRANMU <<"; statusP.style.color = '#00ffff';
+                    statusAI.innerText = "MENUNGGU"; statusAI.style.color = 'gray';
+                } else {
+                    statusAI.innerText = ">> MENGANALISIS <<"; statusAI.style.color = '#ff0000';
+                    statusP.innerText = "MENUNGGU"; statusP.style.color = 'gray';
+                }
+            },
+
+            processAITurn() {
+                if (State.gameState !== 'IDLE') return;
+                let allMoves = Engine.getAllLegalMoves(State.turn);
+                if (allMoves.length === 0) return; // Sudah ditangani di nextTurn
+
+                let bestMove = null; let maxScore = -Infinity;
+                allMoves.forEach(m => {
+                    let score = MathUtils.random(0, 10); 
+                    if (m.to.target) score += PIECE_VALUES[m.to.target.type] * 10;
+                    
+                    // Simulasi sedikit untuk hindari langkah bunuh diri (basic AI)
+                    const piece = Engine.board[m.from.y][m.from.x];
+                    const target = Engine.board[m.to.y][m.to.x];
+                    Engine.board[m.to.y][m.to.x] = piece; Engine.board[m.from.y][m.from.x] = null;
+                    if (Engine.isSquareAttacked(m.to.x, m.to.y, State.playerColor)) score -= PIECE_VALUES[piece.type];
+                    Engine.board[m.from.y][m.from.x] = piece; Engine.board[m.to.y][m.to.x] = target;
+
+                    if (score > maxScore) { maxScore = score; bestMove = m; }
+                });
+
+                if (bestMove) {
+                    const visualPiece = State.visualPieces.find(vp => vp.logicalX === bestMove.from.x && vp.logicalY === bestMove.from.y);
+                    const targetVisual = State.visualPieces.find(vp => vp.logicalX === bestMove.to.x && vp.logicalY === bestMove.to.y);
+                    visualPiece.piece.logicalX_old = bestMove.from.x; visualPiece.piece.logicalY_old = bestMove.from.y;
+                    
+                    // Cek apakah move ini akan menghasilkan checkmate
+                    const isFatality = targetVisual && targetVisual.piece.type === 'k'; // Kalo beneran makan raja (secara teori catur ga bisa, tapi untuk animasi brutal)
+                    
+                    Renderer.executeMoveAnimation(visualPiece, bestMove.to.x, bestMove.to.y, targetVisual, isFatality);
+                }
+            }
+        };
+
+        // --- INPUT HANDLING ---
+        function getLogicalPos(e) {
+            let cx = e.touches ? e.touches[0].clientX : e.clientX;
+            let cy = e.touches ? e.touches[0].clientY : e.clientY;
+            let visualX = Math.floor((cx - Renderer.offsetX) / Renderer.cellSize);
+            let visualY = Math.floor((cy - Renderer.offsetY) / Renderer.cellSize);
+            
+            // Translasi input jika board diputar
+            let logicalX = State.playerColor === 'w' ? visualX : 7 - visualX;
+            let logicalY = State.playerColor === 'w' ? visualY : 7 - visualY;
+            
+            return {x: logicalX, y: logicalY};
+        }
+
+        Renderer.canvas.addEventListener('mousedown', handleInput);
+        Renderer.canvas.addEventListener('touchstart', (e) => { e.preventDefault(); handleInput(e); }, {passive: false});
+
+        function handleInput(e) {
+            if (State.gameState !== 'IDLE' || State.turn !== State.playerColor) return;
+
+            const {x, y} = getLogicalPos(e);
+            if (x < 0 || x > 7 || y < 0 || y > 7) { State.selectedSquare = null; State.validMoves = []; return; }
+
+            const move = State.validMoves.find(m => m.x === x && m.y === y);
+            if (move && State.selectedSquare) {
+                const visualPiece = State.visualPieces.find(vp => vp.logicalX === State.selectedSquare.x && vp.logicalY === State.selectedSquare.y);
+                const targetVisual = State.visualPieces.find(vp => vp.logicalX === x && vp.logicalY === y);
+                visualPiece.piece.logicalX_old = State.selectedSquare.x; visualPiece.piece.logicalY_old = State.selectedSquare.y;
+                Renderer.executeMoveAnimation(visualPiece, x, y, targetVisual);
+                return;
+            }
+
+            const piece = Engine.getPiece(x, y);
+            if (piece && piece.color === State.playerColor) {
+                State.selectedSquare = {x, y};
+                State.validMoves = Engine.getLegalMoves(x, y); // Gunakan LEGAL moves
+                Renderer.triggerScreenShake(3); 
+            } else {
+                State.selectedSquare = null; State.validMoves = [];
+            }
+        }
+
+        // --- RENDER LOOP ---
+        function renderLoop() {
+            const ctx = Renderer.ctx; const cs = Renderer.cellSize; const theme = THEMES[State.activeTheme];
+
+            if (State.camera.shakeIntensity > 0) {
+                State.camera.shakeX = MathUtils.random(-State.camera.shakeIntensity, State.camera.shakeIntensity);
+                State.camera.shakeY = MathUtils.random(-State.camera.shakeIntensity, State.camera.shakeIntensity);
+                State.camera.shakeIntensity *= 0.85; 
+                if (State.camera.shakeIntensity < 0.5) State.camera.shakeIntensity = 0;
+            }
+
+            ctx.fillStyle = theme.darkSquare;
+            ctx.fillRect(0, 0, Renderer.canvas.width, Renderer.canvas.height);
+
+            if (State.invertColors) {
+                ctx.globalCompositeOperation = 'difference';
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, Renderer.canvas.width, Renderer.canvas.height);
+                ctx.globalCompositeOperation = 'source-over';
+            }
+
+            ctx.save();
+            ctx.translate(State.camera.shakeX, State.camera.shakeY);
+
+            // Draw Board Outline
+            ctx.strokeStyle = theme.glowDim; ctx.lineWidth = 2;
+            ctx.strokeRect(Renderer.offsetX, Renderer.offsetY, cs * 8, cs * 8);
+
+            for (let y = 0; y < 8; y++) {
+                for (let x = 0; x < 8; x++) {
+                    const isLight = (x + y) % 2 === 0;
+                    ctx.fillStyle = isLight ? theme.lightSquare : theme.darkSquare;
+                    
+                    // Map visual box
+                    let vx = State.playerColor === 'w' ? x : 7 - x;
+                    let vy = State.playerColor === 'w' ? y : 7 - y;
+                    
+                    ctx.fillRect(Renderer.offsetX + vx * cs, Renderer.offsetY + vy * cs, cs, cs);
+                    
+                    if (State.selectedSquare && State.selectedSquare.x === x && State.selectedSquare.y === y) {
+                        ctx.fillStyle = theme.highlight;
+                        ctx.fillRect(Renderer.offsetX + vx * cs, Renderer.offsetY + vy * cs, cs, cs);
+                    }
+                    
+                    // Merahkan kotak Raja jika SKAK
+                    if (State.isCheck) {
+                        const p = Engine.getPiece(x,y);
+                        if (p && p.type === 'k' && p.color === State.turn) {
+                            ctx.fillStyle = `rgba(255, 0, 0, ${0.4 + Math.sin(Date.now()/100)*0.3})`;
+                            ctx.fillRect(Renderer.offsetX + vx * cs, Renderer.offsetY + vy * cs, cs, cs);
+                        }
+                    }
+                }
+            }
+
+            // Draw Valid Moves
+            State.validMoves.forEach(m => {
+                let vx = State.playerColor === 'w' ? m.x : 7 - m.x;
+                let vy = State.playerColor === 'w' ? m.y : 7 - m.y;
+                const px = Renderer.offsetX + vx * cs; const py = Renderer.offsetY + vy * cs;
+                
+                if (m.target) {
+                    ctx.fillStyle = `rgba(255, 0, 0, ${0.3 + Math.sin(Date.now() / 150) * 0.2})`;
+                    ctx.fillRect(px, py, cs, cs);
+                    ctx.strokeStyle = '#ff0000'; ctx.lineWidth = 2; ctx.strokeRect(px, py, cs, cs);
+                } else {
+                    ctx.fillStyle = theme.glowDim;
+                    ctx.beginPath(); ctx.arc(px + cs/2, py + cs/2, cs*0.15, 0, Math.PI*2); ctx.fill();
+                }
+            });
+
+            State.visualPieces.sort((a, b) => {
+                let yA = State.playerColor === 'w' ? a.renderY : 7 - a.renderY;
+                let yB = State.playerColor === 'w' ? b.renderY : 7 - b.renderY;
+                return yA - yB;
+            });
+            State.visualPieces.forEach(p => { p.update(); p.draw(ctx, cs, Renderer.offsetX, Renderer.offsetY); });
+
+            // Limit dan Cleanup Particle Agresif
+            if(State.particles.length > 200) State.particles.splice(0, State.particles.length - 200);
+            State.particles = State.particles.filter(p => p.life > 0);
+            State.particles.forEach(p => { p.update(); p.draw(ctx); });
+
+            ctx.restore();
+            requestAnimationFrame(renderLoop);
+        }
+
+        // --- INIT ---
+        window.addEventListener('resize', () => Renderer.resize());
+        Renderer.resize();
+        requestAnimationFrame(renderLoop);
+
+    </script>
+</body>
+</html>
