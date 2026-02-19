@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sigma Chess RPG</title>
+    <title>Sigma Chess RPG: Grandmaster Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
@@ -45,11 +45,7 @@
         }
         .hidden-layer { display: none !important; }
         
-        /* Elegant Effects */
-        .accent-text { 
-            color: var(--theme-glow); 
-            text-shadow: 0 0 20px var(--theme-glow-dim);
-        }
+        .accent-text { color: var(--theme-glow); text-shadow: 0 0 20px var(--theme-glow-dim); }
         
         .fatality-text { 
             font-size: clamp(3rem, 10vw, 6rem); 
@@ -60,38 +56,38 @@
             text-align: center;
             font-family: 'Cinzel', serif;
         }
-        
-        /* Evaluation Bar */
+
+        /* Pro Features UI */
         #eval-bar-container {
             position: absolute;
             left: 20px;
             top: 50%;
             transform: translateY(-50%);
-            width: 12px;
-            height: 60%;
-            background-color: rgba(10, 10, 10, 0.9);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            width: 14px;
+            height: 65%;
+            background-color: #222;
+            border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 4px;
             overflow: hidden;
             display: flex;
             flex-direction: column-reverse;
             pointer-events: auto;
             box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-            transition: all 0.3s ease;
+            z-index: 20;
         }
         #eval-fill {
             width: 100%;
             height: 50%;
-            background-color: var(--theme-glow);
-            transition: height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            background-color: #fff;
+            transition: height 0.6s cubic-bezier(0.25, 1, 0.5, 1);
         }
         #eval-text-w, #eval-text-b {
             position: absolute;
             width: 100%;
             text-align: center;
-            font-size: 9px;
+            font-size: 10px;
             font-weight: 600;
-            color: rgba(255,255,255,0.5);
+            color: rgba(255,255,255,0.6);
             z-index: 2;
             padding: 4px 0;
             font-family: 'Inter', sans-serif;
@@ -99,16 +95,47 @@
         #eval-text-b { top: 0; }
         #eval-text-w { bottom: 0; color: #000; }
 
-        .luxury-panel {
-            background: rgba(15, 15, 15, 0.7);
+        #move-history-container {
+            position: absolute;
+            right: 20px;
+            top: 100px;
+            width: 200px;
+            height: calc(100% - 240px);
+            background: rgba(15, 15, 15, 0.8);
             border: 1px solid rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+            border-radius: 6px;
+            pointer-events: auto;
+            overflow-y: auto;
+            padding: 10px;
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            color: #ccc;
+            z-index: 20;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .history-row { display: flex; border-bottom: 1px solid rgba(255,255,255,0.05); padding: 4px 0; }
+        .history-num { width: 30px; color: #666; font-weight: bold; }
+        .history-w, .history-b { flex: 1; cursor: pointer; transition: color 0.2s; }
+        .history-w:hover, .history-b:hover { color: var(--theme-glow); }
+        
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 2px; }
+
+        .luxury-panel {
+            background: rgba(15, 15, 15, 0.75);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(15px);
             border-radius: 6px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
         }
         
         .btn-luxury {
-            background: rgba(20, 20, 20, 0.5);
+            background: rgba(20, 20, 20, 0.6);
             border: 1px solid var(--theme-glow-dim);
             color: var(--theme-text);
             padding: 14px 28px;
@@ -117,9 +144,8 @@
             text-transform: uppercase;
             letter-spacing: 4px;
             cursor: pointer;
-            transition: all 0.4s ease;
+            transition: all 0.3s ease;
             position: relative;
-            overflow: hidden;
             width: 100%;
             border-radius: 3px;
         }
@@ -129,26 +155,39 @@
             box-shadow: 0 0 20px var(--theme-glow-dim);
             border-color: var(--theme-glow);
         }
+
+        .slow-mo-flash {
+            position: absolute; inset: 0;
+            background: radial-gradient(circle, rgba(255,215,0,0.2) 0%, rgba(255,0,0,0.4) 100%);
+            mix-blend-mode: overlay;
+            z-index: 5;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
         
-        @media (max-width: 640px) {
+        @media (max-width: 800px) {
             .hud-container { flex-direction: column; gap: 0.5rem; align-items: center; }
             .luxury-panel { padding: 0.5rem 1rem; width: 100%; justify-content: center; }
             .desktop-only { display: none; }
-            #eval-bar-container { left: 5px; width: 8px; height: 50%; }
+            #eval-bar-container { left: 4px; width: 8px; height: 50%; }
+            #move-history-container { display: none; } /* Hide history on small screens to save space */
         }
     </style>
 </head>
 <body style="--theme-glow: #d4af37; --theme-glow-dim: rgba(212,175,55,0.3); --theme-text: #d4af37;">
 
+    <!-- Slow-mo Checkmate Overlay -->
+    <div id="slow-mo-overlay" class="slow-mo-flash"></div>
+
     <!-- MAIN MENU -->
     <div id="main-menu" class="menu-layer">
         <h1 class="text-4xl sm:text-6xl mb-2 text-center accent-text" style="letter-spacing: 8px;">ROYAL CHESS</h1>
-        <h2 class="text-xs sm:text-sm text-gray-400 mb-12 uppercase tracking-[0.5em] text-center font-light">Grandmaster Edition</h2>
+        <h2 class="text-xs sm:text-sm text-gray-400 mb-12 uppercase tracking-[0.5em] text-center font-light">Pro Simulator (Elo 1500)</h2>
         
         <div class="space-y-4 flex flex-col w-11/12 max-w-xs">
             <button class="btn-luxury" onclick="MenuSystem.showSideSelection()">PLAY</button>
-            <button class="btn-luxury" onclick="MenuSystem.showStatsMenu()" style="border-color:rgba(255,255,255,0.2); color:#ccc;">STATISTICS</button>
-            <button class="btn-luxury" onclick="MenuSystem.showSettings()" style="border-color:rgba(255,255,255,0.2); color:#ccc;">SETTINGS</button>
+            <button class="btn-luxury" onclick="MenuSystem.showSettings()" style="border-color:rgba(255,255,255,0.2); color:#ccc;">AESTHETICS</button>
         </div>
     </div>
 
@@ -173,32 +212,12 @@
         <button class="mt-16 text-xs text-gray-500 hover:text-gray-300 tracking-[0.2em] uppercase" onclick="MenuSystem.showMainMenu()">Return</button>
     </div>
 
-    <!-- STATISTICS -->
-    <div id="stats-menu" class="menu-layer hidden-layer">
-        <h2 class="text-2xl sm:text-3xl mb-8 text-center serif-text accent-text" style="letter-spacing: 4px;">TELEMETRY</h2>
-        <div class="w-11/12 max-w-md luxury-panel p-8 text-left space-y-5 text-sm font-light tracking-wider">
-            <div class="flex justify-between border-b border-gray-800 pb-3">
-                <span class="text-gray-400">TOTAL TURNS</span> <span id="stat-turns" class="text-white font-medium">0</span>
-            </div>
-            <div class="flex justify-between border-b border-gray-800 pb-3">
-                <span class="text-gray-400">ENEMIES CAPTURED</span> <span id="stat-kills" class="text-white font-medium">0</span>
-            </div>
-            <div class="flex justify-between border-b border-gray-800 pb-3">
-                <span class="text-gray-400">CHECKS DELIVERED</span> <span id="stat-checks" class="text-white font-medium">0</span>
-            </div>
-            <div class="flex justify-between border-b border-gray-800 pb-3">
-                <span class="text-gray-400">VICTORIES</span> <span id="stat-fatalities" class="text-white font-medium">0</span>
-            </div>
-        </div>
-        <button class="mt-16 text-xs text-gray-500 hover:text-gray-300 tracking-[0.2em] uppercase" onclick="MenuSystem.showMainMenu()">Return</button>
-    </div>
-
     <!-- GAME OVER SCREEN -->
     <div id="game-over-screen" class="menu-layer hidden-layer bg-black/95">
         <h1 id="fatality-title" class="fatality-text mb-4">CHECKMATE</h1>
         <p id="winner-text" class="text-sm sm:text-base font-light text-gray-300 tracking-[0.4em] mb-16 text-center px-4 uppercase">White Triumphs</p>
         <div class="w-11/12 max-w-xs space-y-5">
-            <button class="btn-luxury" onclick="GameCore.undo()" id="btn-undo-death" style="--theme-glow:#ccc;">REVERT TIME</button>
+            <button class="btn-luxury" onclick="GameCore.undo()" id="btn-undo-death" style="--theme-glow:#ccc;">REVERT TIME (UNDO)</button>
             <button class="btn-luxury" onclick="MenuSystem.showMainMenu()" style="--theme-glow:#d4af37;">MAIN MENU</button>
         </div>
     </div>
@@ -213,8 +232,14 @@
             <div id="eval-text-w" class="desktop-only"></div>
         </div>
 
+        <!-- Move History (Desktop Only) -->
+        <div id="move-history-container">
+            <div class="text-center font-bold text-white mb-2 pb-2 border-b border-gray-600">HISTORY</div>
+            <div id="history-content"></div>
+        </div>
+
         <!-- TOP PANELS -->
-        <div class="w-full p-4 sm:p-6 flex justify-between items-start pointer-events-none hud-container pl-12 sm:pl-20">
+        <div class="w-full p-4 sm:p-6 flex justify-between items-start pointer-events-none hud-container pl-12 sm:pl-20 pr-12 sm:pr-[240px]">
             <div class="luxury-panel px-5 sm:px-6 py-3 sm:py-4 pointer-events-auto flex items-center gap-4 w-full sm:w-auto">
                 <div id="player-icon" class="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center border text-lg bg-black font-serif">♟</div>
                 <div class="flex-1">
@@ -232,20 +257,17 @@
             </div>
         </div>
         
-        <!-- Center Check Warning -->
         <div id="check-warning" class="absolute top-1/4 left-1/2 transform -translate-x-1/2 accent-text font-serif text-xl sm:text-2xl tracking-[0.3em] animate-pulse hidden-layer bg-black/60 px-8 py-3 rounded-sm border border-white/10 backdrop-blur-md pointer-events-none uppercase">
             Check
         </div>
 
-        <!-- BOTTOM CONTROLS & MINI STATS -->
-        <div class="w-full p-4 sm:p-6 flex justify-between items-end pointer-events-none pl-12 sm:pl-20">
-            <div class="luxury-panel px-4 py-3 pointer-events-auto text-[10px] sm:text-xs font-light text-gray-400 desktop-only flex gap-6 tracking-widest uppercase">
+        <!-- BOTTOM CONTROLS -->
+        <div class="w-full p-4 sm:p-6 flex justify-between items-end pointer-events-none pl-12 sm:pl-20 pr-12 sm:pr-[240px]">
+            <div class="luxury-panel px-4 py-3 pointer-events-auto text-[10px] sm:text-xs font-light text-gray-400 flex gap-6 tracking-widest uppercase">
                 <span>Captures: <span id="mini-kills" class="text-white">0</span></span>
-                <span>Moves: <span id="mini-turns" class="text-white">0</span></span>
             </div>
 
-            <!-- UNDO / REDO CONTROLS -->
-            <div class="flex gap-3 sm:gap-4 pointer-events-auto w-full sm:w-auto justify-end">
+            <div class="flex gap-3 sm:gap-4 pointer-events-auto w-full sm:w-auto justify-end mt-4 sm:mt-0">
                 <button id="btn-undo" class="btn-luxury text-[10px] sm:text-xs py-2 px-4 sm:px-6 opacity-30 pointer-events-none" onclick="GameCore.undo()">Undo</button>
                 <button id="btn-redo" class="btn-luxury text-[10px] sm:text-xs py-2 px-4 sm:px-6 opacity-30 pointer-events-none" onclick="GameCore.redo()">Redo</button>
             </div>
@@ -253,18 +275,18 @@
     </div>
 
     <!-- Cinematic Bars -->
-    <div id="cinematic-bar-top" class="ui-layer top-0 left-0 w-full h-16 sm:h-24 bg-[#050505] transition-transform duration-300 -translate-y-full border-b border-white/5"></div>
-    <div id="cinematic-bar-bottom" class="ui-layer bottom-0 left-0 w-full h-16 sm:h-24 bg-[#050505] transition-transform duration-300 translate-y-full border-t border-white/5"></div>
+    <div id="cinematic-bar-top" class="ui-layer top-0 left-0 w-full h-16 sm:h-20 bg-[#050505] transition-transform duration-300 -translate-y-full border-b border-white/5"></div>
+    <div id="cinematic-bar-bottom" class="ui-layer bottom-0 left-0 w-full h-16 sm:h-20 bg-[#050505] transition-transform duration-300 translate-y-full border-t border-white/5"></div>
 
     <canvas id="gameCanvas"></canvas>
 
     <script>
         /**
          * =====================================================================
-         * SIGMA CHESS RPG V4 - GRANDMASTER EDITION (Target Elo: ~1500)
-         * Architecture: S3 MIT Level - Decoupled Logic & Visualization
-         * Features: Minimax Alpha-Beta Pruning, PST Evaluation, FIDE Rules,
-         * Eval Bar, Algebraic Notation, Threefold Repetition.
+         * SIGMA CHESS RPG V5 - PRO SIMULATOR (Elo 1500)
+         * Architecture: S3 MIT Level - Pure Alpha-Beta Minimax & PST
+         * Features: Algebraic Notation (SAN) History, Move Classification 
+         * (Brilliant/Blunder), Slow-Mo Checkmate Fatality, Exact Evaluation.
          * =====================================================================
          */
 
@@ -276,7 +298,7 @@
         const THEMES = {
             obsidian: {
                 darkSquare: '#121212', lightSquare: '#262626',
-                highlight: 'rgba(212, 175, 55, 0.3)', // Soft Gold
+                highlight: 'rgba(212, 175, 55, 0.4)',
                 playerText: '#d4af37', enemyText: '#aaaaaa',
                 particlePlayer: '#d4af37', particleEnemy: '#dddddd',
                 glow: '#d4af37', glowDim: 'rgba(212, 175, 55, 0.2)',
@@ -284,7 +306,7 @@
             },
             ivory: {
                 darkSquare: '#4a3b32', lightSquare: '#e8dcca',
-                highlight: 'rgba(255, 255, 255, 0.4)',
+                highlight: 'rgba(255, 255, 255, 0.5)',
                 playerText: '#ffffff', enemyText: '#111111',
                 particlePlayer: '#e8dcca', particleEnemy: '#4a3b32',
                 glow: '#ffffff', glowDim: 'rgba(255, 255, 255, 0.3)',
@@ -325,8 +347,9 @@
             playMove() { this.play('triangle', 300, 0.1, 0.1); setTimeout(()=>this.play('triangle', 200, 0.1, 0.1), 50); },
             playCapture() { this.play('sawtooth', 150, 0.3, 0.2); this.play('square', 100, 0.3, 0.2); },
             playCheck() { this.play('square', 600, 0.2, 0.2); setTimeout(()=>this.play('square', 800, 0.4, 0.2), 100); },
-            playFatality() { this.play('sawtooth', 60, 2.0, 0.5); this.play('square', 40, 2.0, 0.5); },
-            playPromote() { this.play('sine', 400, 0.1, 0.1); setTimeout(()=>this.play('sine', 600, 0.1, 0.1), 100); setTimeout(()=>this.play('sine', 800, 0.3, 0.1), 200); }
+            playFatality() { this.play('sawtooth', 60, 3.0, 0.6); this.play('square', 40, 3.0, 0.6); },
+            playBrilliant() { this.play('sine', 800, 0.2, 0.2); setTimeout(()=>this.play('sine', 1200, 0.5, 0.3), 150); },
+            playBlunder() { this.play('sawtooth', 100, 0.5, 0.3); setTimeout(()=>this.play('square', 50, 1.0, 0.3), 100); }
         };
 
         window.addEventListener('click', () => AudioSys.init(), {once: true});
@@ -337,10 +360,12 @@
             turn: 'w', playerColor: 'w', gameState: 'MENU',
             selectedSquare: null, validMoves: [],
             camera: { x: 0, y: 0, shakeX: 0, shakeY: 0, shakeIntensity: 0 },
-            invertColors: false, particles: [], visualPieces: [],
+            invertColors: false, timeScale: 1.0, // For SlowMo
+            particles: [], visualPieces: [],
             activeTheme: 'obsidian', isCheck: false,
             history: [], historyIndex: -1, currentEval: 0,
-            stats: { turns: 0, kills: 0, checks: 0, fatalities: 0 }
+            stats: { captures: 0 },
+            moveLog: [] // For SAN History
         };
 
         // --- UI & MENUS ---
@@ -351,11 +376,9 @@
                 document.getElementById('main-menu').classList.remove('hidden-layer');
                 document.getElementById('game-hud').classList.add('hidden-layer');
                 State.gameState = 'MENU';
-                this.updateStatsUI();
             },
             showSideSelection() { AudioSys.playUI(); this.hideAll(); document.getElementById('side-menu').classList.remove('hidden-layer'); },
             showSettings() { AudioSys.playUI(); this.hideAll(); document.getElementById('settings-menu').classList.remove('hidden-layer'); },
-            showStatsMenu() { AudioSys.playUI(); this.hideAll(); document.getElementById('stats-menu').classList.remove('hidden-layer'); },
             setTheme(themeName) {
                 AudioSys.playUI(); State.activeTheme = themeName;
                 const t = THEMES[themeName];
@@ -363,19 +386,12 @@
                 document.body.style.setProperty('--theme-glow-dim', t.glowDim);
                 document.body.style.setProperty('--theme-text', t.glow);
             },
-            updateStatsUI() {
-                document.getElementById('stat-turns').innerText = State.stats.turns;
-                document.getElementById('stat-kills').innerText = State.stats.kills;
-                document.getElementById('stat-checks').innerText = State.stats.checks;
-                document.getElementById('stat-fatalities').innerText = State.stats.fatalities;
-                document.getElementById('mini-turns').innerText = State.stats.turns;
-                document.getElementById('mini-kills').innerText = State.stats.kills;
-            },
             updateEvalBar(score) {
                 const fill = document.getElementById('eval-fill');
                 const textW = document.getElementById('eval-text-w');
                 const textB = document.getElementById('eval-text-b');
                 
+                // Score is White perspective (+ is white winning)
                 let evalCp = score / 100;
                 let winPercent = 50 + (evalCp * 5); 
                 winPercent = Math.max(5, Math.min(95, winPercent)); 
@@ -383,6 +399,7 @@
                 if (score > 10000) { winPercent = 100; evalCp = "M"; } 
                 if (score < -10000) { winPercent = 0; evalCp = "-M"; } 
 
+                // White fills from bottom up
                 fill.style.height = `${winPercent}%`;
                 
                 let displayTxt = (evalCp > 0 && evalCp !== "M") ? `+${evalCp.toFixed(1)}` : (evalCp !== "-M" && evalCp !== "M" ? evalCp.toFixed(1) : evalCp);
@@ -391,6 +408,20 @@
                 } else {
                     textB.innerText = displayTxt; textW.innerText = "";
                 }
+            },
+            updateHistoryUI() {
+                const container = document.getElementById('history-content');
+                container.innerHTML = '';
+                for(let i=0; i<State.moveLog.length; i+=2) {
+                    const row = document.createElement('div');
+                    row.className = 'history-row';
+                    const num = document.createElement('div'); num.className = 'history-num'; num.innerText = `${(i/2)+1}.`;
+                    const wMove = document.createElement('div'); wMove.className = 'history-w'; wMove.innerText = State.moveLog[i];
+                    const bMove = document.createElement('div'); bMove.className = 'history-b'; bMove.innerText = State.moveLog[i+1] || '';
+                    row.appendChild(num); row.appendChild(wMove); row.appendChild(bMove);
+                    container.appendChild(row);
+                }
+                container.scrollTop = container.scrollHeight;
             }
         };
 
@@ -453,10 +484,6 @@
             recordPosition() {
                 const key = this.getPosKey();
                 this.positionCounts[key] = (this.positionCounts[key] || 0) + 1;
-            }
-            
-            removePositionRecord(key) {
-                if (this.positionCounts[key]) this.positionCounts[key]--;
             }
 
             isThreefoldRepetition() {
@@ -616,7 +643,6 @@
                 this.halfMoves = revertData.halfMoves;
             }
 
-            // Fungsi yang diperlukan untuk validasi pergerakan dari satu petak
             getLegalMoves(x, y) {
                 const piece = this.getPiece(x, y);
                 if (!piece) return [];
@@ -625,9 +651,7 @@
 
                 for (let move of pseudoMoves) {
                     const rev = this.makeMoveFast(move);
-                    if (!this.isInCheck(piece.color)) {
-                        legalMoves.push(move);
-                    }
+                    if (!this.isInCheck(piece.color)) legalMoves.push(move);
                     this.unmakeMoveFast(move, rev);
                 }
                 return legalMoves;
@@ -650,14 +674,45 @@
                 }
                 return moves;
             }
+
+            // Standard Algebraic Notation Generator
+            moveToSAN(move) {
+                const piece = this.board[move.from.y][move.from.x];
+                if (!piece) return '';
+                if (move.to.isCastle) return move.to.x === 6 ? 'O-O' : 'O-O-O';
+                
+                const fileStr = String.fromCharCode(97 + move.to.x);
+                const rankStr = 8 - move.to.y;
+                let san = '';
+                
+                if (piece.type === 'p') {
+                    if (move.to.target || move.to.isEP) san = String.fromCharCode(97 + move.from.x) + 'x';
+                    san += fileStr + rankStr;
+                    if (move.to.y === 0 || move.to.y === 7) san += '=Q'; // Simplified promotion
+                } else {
+                    san = piece.type.toUpperCase();
+                    if (move.to.target) san += 'x';
+                    san += fileStr + rankStr;
+                }
+                
+                // Add Check/Mate symbol tentatively (Engine state needed)
+                const rev = this.makeMoveFast(move);
+                const oppColor = piece.color === 'w' ? 'b' : 'w';
+                if (this.isInCheck(oppColor)) {
+                    const oppMoves = this.getAllLegalMoves(oppColor);
+                    if (oppMoves.length === 0) san += '#';
+                    else san += '+';
+                }
+                this.unmakeMoveFast(move, rev);
+                
+                return san;
+            }
         }
 
         const Engine = new ChessEngine();
 
-        // --- 2. AI ENGINE (Minimax + Alpha-Beta + PST) Target Elo 1500 ---
+        // --- 2. AI ENGINE (Fixed Minimax + Alpha-Beta + PST) Target Elo 1500 ---
         const SigmaAI = {
-            nodesEvaluated: 0,
-            
             PST: {
                 p: [
                     [0,  0,  0,  0,  0,  0,  0,  0],
@@ -729,29 +784,30 @@
                         if (p) {
                             let pstVal = 0;
                             if (p.color === 'w') pstVal = this.PST[p.type][y][x];
-                            else pstVal = this.PST[p.type][7-y][x];
+                            else pstVal = this.PST[p.type][7-y][x]; // Flip for Black
                             
                             let val = PIECE_VALUES[p.type] + pstVal;
-                            score += p.color === 'w' ? val : -val;
+                            score += p.color === 'w' ? val : -val; // White is Positive, Black is Negative
                         }
                     }
                 }
                 return score;
             },
 
-            minimax(engine, depth, alpha, beta, isMaximizing, color) {
-                this.nodesEvaluated++;
+            // BUG FIXED: Minimax correctly identifies Maximizer (White) and Minimizer (Black)
+            minimax(engine, depth, alpha, beta, currentTurn) {
                 if (depth === 0) return this.evaluatePosition(engine);
 
-                const moves = engine.getAllLegalMoves(isMaximizing ? color : (color==='w'?'b':'w'));
+                const moves = engine.getAllLegalMoves(currentTurn);
                 
                 if (moves.length === 0) {
-                    if (engine.isInCheck(isMaximizing ? color : (color==='w'?'b':'w'))) {
-                        return isMaximizing ? -99999 + (10-depth) : 99999 - (10-depth); 
+                    if (engine.isInCheck(currentTurn)) {
+                        return currentTurn === 'w' ? -99999 + (10-depth) : 99999 - (10-depth); 
                     }
-                    return 0; 
+                    return 0; // Stalemate
                 }
 
+                // Move Ordering for Alpha-Beta efficiency
                 moves.sort((a,b) => {
                     let scoreA = a.to.target ? PIECE_VALUES[a.to.target.type] : 0;
                     if (a.to.isPromoted) scoreA += 900;
@@ -760,33 +816,32 @@
                     return scoreB - scoreA;
                 });
 
-                if (isMaximizing) {
+                if (currentTurn === 'w') { // Maximizing Player
                     let maxEval = -Infinity;
                     for (let move of moves) {
                         const rev = engine.makeMoveFast(move);
-                        const ev = this.minimax(engine, depth - 1, alpha, beta, false, color);
+                        const ev = this.minimax(engine, depth - 1, alpha, beta, 'b');
                         engine.unmakeMoveFast(move, rev);
                         maxEval = Math.max(maxEval, ev);
                         alpha = Math.max(alpha, ev);
-                        if (beta <= alpha) break;
+                        if (beta <= alpha) break; // Pruning
                     }
                     return maxEval;
-                } else {
+                } else { // Minimizing Player (Black)
                     let minEval = Infinity;
                     for (let move of moves) {
                         const rev = engine.makeMoveFast(move);
-                        const ev = this.minimax(engine, depth - 1, alpha, beta, true, color);
+                        const ev = this.minimax(engine, depth - 1, alpha, beta, 'w');
                         engine.unmakeMoveFast(move, rev);
                         minEval = Math.min(minEval, ev);
                         beta = Math.min(beta, ev);
-                        if (beta <= alpha) break;
+                        if (beta <= alpha) break; // Pruning
                     }
                     return minEval;
                 }
             },
 
             getBestMove(engine, depth, color) {
-                this.nodesEvaluated = 0;
                 let bestMove = null;
                 let bestValue = color === 'w' ? -Infinity : Infinity;
                 let alpha = -Infinity;
@@ -794,26 +849,26 @@
 
                 const moves = engine.getAllLegalMoves(color);
                 
+                // Shuffle for variety
                 moves.sort(() => Math.random() - 0.5);
                 moves.sort((a,b) => (b.to.target ? 1000 : 0) - (a.to.target ? 1000 : 0));
 
                 for (let move of moves) {
                     const rev = engine.makeMoveFast(move);
-                    const boardVal = this.minimax(engine, depth - 1, alpha, beta, false, color);
+                    const boardVal = this.minimax(engine, depth - 1, alpha, beta, color === 'w' ? 'b' : 'w');
                     engine.unmakeMoveFast(move, rev);
 
                     if (color === 'w') {
                         if (boardVal > bestValue) { bestValue = boardVal; bestMove = move; }
-                        alpha = Math.max(alpha, boardVal);
+                        alpha = Math.max(alpha, bestValue);
                     } else {
                         if (boardVal < bestValue) { bestValue = boardVal; bestMove = move; }
-                        beta = Math.min(beta, boardVal);
+                        beta = Math.min(beta, bestValue);
                     }
                 }
                 
                 State.currentEval = bestValue;
                 MenuSystem.updateEvalBar(bestValue); 
-                
                 return bestMove;
             }
         };
@@ -828,15 +883,15 @@
                 this.isDead = false; this.isAttacking = false;
             }
 
-            update() {
+            update(dtScale) {
                 if (this.isDead) {
-                    this.scale = MathUtils.lerp(this.scale, 0, 0.15);
-                    this.opacity = MathUtils.lerp(this.opacity, 0, 0.15);
+                    this.scale = MathUtils.lerp(this.scale, 0, 0.15 * dtScale);
+                    this.opacity = MathUtils.lerp(this.opacity, 0, 0.15 * dtScale);
                     return;
                 }
                 if (!this.isAttacking) {
-                    this.renderX = MathUtils.lerp(this.renderX, this.logicalX, 0.25);
-                    this.renderY = MathUtils.lerp(this.renderY, this.logicalY, 0.25);
+                    this.renderX = MathUtils.lerp(this.renderX, this.logicalX, 0.25 * dtScale);
+                    this.renderY = MathUtils.lerp(this.renderY, this.logicalY, 0.25 * dtScale);
                 }
             }
 
@@ -878,16 +933,18 @@
                 this.size = MathUtils.random(4, 12);
                 this.isText = isText; this.text = text;
             }
-            update() {
-                this.x += this.vx; this.y += this.vy; this.vy += 0.8;
-                this.life -= MathUtils.random(0.06, 0.1); 
-                if(this.isText) { this.vy -= 1.5; this.life -= 0.02; }
+            update(dtScale) {
+                this.x += this.vx * dtScale; 
+                this.y += this.vy * dtScale; 
+                this.vy += 0.8 * dtScale;
+                this.life -= MathUtils.random(0.04, 0.08) * dtScale; 
+                if(this.isText) { this.vy -= 1.5 * dtScale; this.life -= 0.01 * dtScale; }
             }
             draw(ctx) {
                 if (this.life <= 0) return;
                 ctx.globalAlpha = this.life;
                 if (this.isText) {
-                    ctx.font = '900 clamp(20px, 4vw, 35px) "Courier New"';
+                    ctx.font = '900 clamp(20px, 3vw, 30px) "Cinzel"';
                     ctx.fillStyle = this.color; ctx.textAlign = 'center';
                     ctx.shadowBlur = 15; ctx.shadowColor = this.color;
                     ctx.strokeStyle = '#000'; ctx.lineWidth = 4;
@@ -910,32 +967,69 @@
                 this.ctx.scale(dpr, dpr);
                 const minDim = Math.min(window.innerWidth, window.innerHeight);
                 this.cellSize = Math.floor((minDim * 0.90) / 8); 
-                if (window.innerWidth > 640) this.cellSize = Math.floor((minDim * 0.75) / 8); 
+                
+                // Extra room for history & eval bar on desktop
+                if (window.innerWidth > 800) this.cellSize = Math.floor((minDim * 0.70) / 8); 
 
                 this.offsetX = (window.innerWidth - (this.cellSize * 8)) / 2;
-                if (window.innerWidth > 640) this.offsetX += 20; 
+                if (window.innerWidth > 800) this.offsetX -= 50; // Shift left a bit due to history panel on right
 
                 this.offsetY = window.innerHeight > window.innerWidth ? (window.innerHeight - this.cellSize*8)/2 + 40 : (window.innerHeight - this.cellSize*8)/2 + 20;
             },
 
-            triggerScreenShake(intensity = 15) { State.camera.shakeIntensity = intensity; },
-
-            createExplosion(logicalX, logicalY, color, textMsg, isFatality = false) {
+            triggerFatality(type, logicalX, logicalY) {
+                let vx = State.playerColor === 'w' ? logicalX : 7 - logicalX;
+                let vy = State.playerColor === 'w' ? logicalY : 7 - logicalY;
+                const px = this.offsetX + vx * this.cellSize + this.cellSize/2;
+                const py = this.offsetY + vy * this.cellSize + this.cellSize/2;
+                const theme = THEMES[State.activeTheme];
+                
+                if (type === 'CAPTURE') {
+                    for(let i=0; i<30; i++) State.particles.push(new Particle(px, py, theme.glow));
+                    State.camera.shakeIntensity = 15;
+                } else if (type === 'CHECKMATE') {
+                    State.timeScale = 0.15; // Slow Mo Time Dilation
+                    State.invertColors = true;
+                    document.getElementById('slow-mo-overlay').style.opacity = '1';
+                    
+                    for(let i=0; i<150; i++) State.particles.push(new Particle(px, py, '#ff0000'));
+                    State.camera.shakeIntensity = 40;
+                    
+                    setTimeout(() => {
+                        State.invertColors = false;
+                        document.getElementById('slow-mo-overlay').style.opacity = '0';
+                    }, 800);
+                }
+            },
+            
+            triggerMoveClassification(logicalX, logicalY, diff, isPlayer) {
+                if (!isPlayer) return; // Only show for player
                 let vx = State.playerColor === 'w' ? logicalX : 7 - logicalX;
                 let vy = State.playerColor === 'w' ? logicalY : 7 - logicalY;
                 const px = this.offsetX + vx * this.cellSize + this.cellSize/2;
                 const py = this.offsetY + vy * this.cellSize + this.cellSize/2;
                 
-                const count = isFatality ? 80 : 25;
-                for(let i=0; i<count; i++) State.particles.push(new Particle(px, py, color));
-                if (textMsg) State.particles.push(new Particle(px, py - 30, color, true, textMsg));
-                this.triggerScreenShake(isFatality ? 30 : 15);
+                // Evaluasi Perspektif: Jika Putih, diff > 150 bagus. Jika Hitam, diff < -150 bagus.
+                const perspectiveDiff = State.playerColor === 'w' ? diff : -diff;
+                
+                if (perspectiveDiff < -150) {
+                    State.particles.push(new Particle(px, py - 40, '#ff3333', true, "BLUNDER ??"));
+                    AudioSys.playBlunder();
+                } else if (perspectiveDiff > 150) {
+                    State.particles.push(new Particle(px, py - 40, '#00ffff', true, "BRILLIANT !!"));
+                    AudioSys.playBrilliant();
+                }
             },
 
-            async executeMoveAnimation(visualPiece, moveObj) {
+            async executeMoveAnimation(visualPiece, moveObj, oldEval) {
                 State.gameState = 'ANIMATING';
                 const toX = moveObj.to.x; const toY = moveObj.to.y;
                 const isFatalityCheck = moveObj.to.target && moveObj.to.target.type === 'k';
+
+                // Rekam SAN
+                const san = Engine.moveToSAN(moveObj);
+                State.moveLog.push(san);
+                MenuSystem.updateHistoryUI();
 
                 let rookVisual = null; let rookToX = 0;
                 if (moveObj.to.isCastle) {
@@ -945,11 +1039,7 @@
                 }
 
                 let targetVisual = State.visualPieces.find(vp => vp.logicalX === toX && vp.logicalY === toY);
-                let explodeY = toY;
-                if (moveObj.to.isEP) {
-                    targetVisual = State.visualPieces.find(vp => vp.logicalX === toX && vp.logicalY === visualPiece.logicalY);
-                    explodeY = visualPiece.logicalY;
-                }
+                if (moveObj.to.isEP) targetVisual = State.visualPieces.find(vp => vp.logicalX === toX && vp.logicalY === visualPiece.logicalY);
 
                 if (targetVisual) {
                     document.getElementById('cinematic-bar-top').style.transform = 'translateY(0)';
@@ -959,37 +1049,31 @@
                     const dx = toX - visualPiece.logicalX; const dy = toY - visualPiece.logicalY;
                     const angle = Math.atan2(dy, dx);
                     visualPiece.renderX -= Math.cos(angle) * 1.5; visualPiece.renderY -= Math.sin(angle) * 1.5;
-                    await new Promise(r => setTimeout(r, 250));
+                    await new Promise(r => setTimeout(r, 200 * State.timeScale));
 
                     visualPiece.renderX = toX; visualPiece.renderY = toY;
-                    await new Promise(r => setTimeout(r, 50));
+                    await new Promise(r => setTimeout(r, 50 * State.timeScale));
 
-                    const theme = THEMES[State.activeTheme];
-                    const color = targetVisual.piece.color === 'w' ? theme.particlePlayer : theme.particleEnemy;
-                    
                     if (isFatalityCheck) {
-                        State.invertColors = true; AudioSys.playFatality(); State.stats.fatalities++;
-                        this.createExplosion(toX, explodeY, theme.glow, "SKAKMAT", true);
+                        AudioSys.playFatality();
+                        this.triggerFatality('CHECKMATE', toX, toY);
                         visualPiece.scale = 2.0;
-                        await new Promise(r => setTimeout(r, 150));
-                        State.invertColors = false;
-                        await new Promise(r => setTimeout(r, 400));
+                        await new Promise(r => setTimeout(r, 600 * State.timeScale));
                     } else {
-                        AudioSys.playCapture(); State.stats.kills++;
-                        const dmgText = "CAPTURE";
-                        this.createExplosion(toX, explodeY, color, dmgText);
+                        AudioSys.playCapture(); State.stats.captures++; document.getElementById('mini-kills').innerText = State.stats.captures;
+                        this.triggerFatality('CAPTURE', toX, toY);
                         visualPiece.scale = 1.4;
                     }
                     
                     targetVisual.isDead = true;
-                    await new Promise(r => setTimeout(r, 200)); 
+                    await new Promise(r => setTimeout(r, 150 * State.timeScale)); 
                     visualPiece.isAttacking = false; visualPiece.scale = 1;
                     document.getElementById('cinematic-bar-top').style.transform = 'translateY(-100%)';
                     document.getElementById('cinematic-bar-bottom').style.transform = 'translateY(100%)';
                 } else {
                     AudioSys.playMove();
                     visualPiece.logicalX = toX; visualPiece.logicalY = toY;
-                    await new Promise(r => setTimeout(r, 150));
+                    await new Promise(r => setTimeout(r, 150 * State.timeScale));
                 }
 
                 if (rookVisual) rookVisual.logicalX = rookToX;
@@ -999,8 +1083,13 @@
                 
                 if (visualPiece.piece.type === 'p' && (toY === 0 || toY === 7)) {
                     AudioSys.playPromote();
-                    this.createExplosion(toX, toY, '#ffff00', "PROMOTION!");
+                    State.particles.push(new Particle(this.offsetX + toX*this.cellSize, this.offsetY + toY*this.cellSize, '#ffff00', true, "PROMOTION"));
                 }
+                
+                // Evaluasi Cepat Pasca-Langkah untuk Move Classification
+                const newEval = SigmaAI.evaluatePosition(Engine);
+                const evalDiff = newEval - oldEval;
+                this.triggerMoveClassification(toX, toY, evalDiff, State.turn === State.playerColor);
 
                 GameCore.syncVisualPieces();
                 GameCore.nextTurn();
@@ -1015,7 +1104,7 @@
                 
                 State.playerColor = colorChoice; State.turn = 'w'; State.gameState = 'IDLE';
                 State.isCheck = false; State.history = []; State.historyIndex = -1;
-                State.stats = { turns: 0, kills: 0, checks: 0, fatalities: 0 };
+                State.stats = { captures: 0 }; State.moveLog = []; State.timeScale = 1.0;
                 
                 const theme = THEMES[State.activeTheme];
                 const pColorHex = State.playerColor === 'w' ? theme.glow : '#888';
@@ -1024,14 +1113,17 @@
                 document.getElementById('player-icon').style.borderColor = pColorHex; document.getElementById('player-icon').style.color = pColorHex;
                 document.getElementById('enemy-icon').innerText = State.playerColor === 'w' ? '♟' : '♙';
                 document.getElementById('enemy-icon').style.borderColor = eColorHex; document.getElementById('enemy-icon').style.color = eColorHex;
+                document.getElementById('mini-kills').innerText = '0';
 
                 Engine.setupBoard(); 
                 this.syncVisualPieces(); 
                 this.updateHUD(); 
-                this.saveState();
+                MenuSystem.updateHistoryUI();
                 
                 const initialEval = SigmaAI.evaluatePosition(Engine);
+                State.currentEval = initialEval;
                 MenuSystem.updateEvalBar(initialEval);
+                this.saveState();
 
                 if (State.playerColor === 'b') setTimeout(() => this.processAITurn(), 800);
             },
@@ -1041,7 +1133,8 @@
                 State.history.push({
                     logicState: Engine.cloneState(),
                     turn: State.turn, isCheck: State.isCheck,
-                    stats: {...State.stats}, evalVal: State.currentEval
+                    stats: {...State.stats}, evalVal: State.currentEval,
+                    moveLog: [...State.moveLog]
                 });
                 State.historyIndex = State.history.length - 1;
                 this.updateUndoRedoUI();
@@ -1053,9 +1146,12 @@
                 State.stats = {...historyState.stats};
                 State.gameState = 'IDLE'; State.selectedSquare = null; State.validMoves = [];
                 State.currentEval = historyState.evalVal || 0;
+                State.moveLog = [...historyState.moveLog];
+                State.timeScale = 1.0;
                 this.syncVisualPieces(); this.updateHUD(); this.updateUndoRedoUI();
-                MenuSystem.updateStatsUI();
+                MenuSystem.updateHistoryUI();
                 MenuSystem.updateEvalBar(State.currentEval);
+                document.getElementById('mini-kills').innerText = State.stats.captures;
             },
 
             undo() {
@@ -1106,13 +1202,11 @@
             },
 
             nextTurn() {
-                if(State.turn === State.playerColor) State.stats.turns++;
                 State.turn = State.turn === 'w' ? 'b' : 'w';
                 State.selectedSquare = null; State.validMoves = [];
                 
                 State.isCheck = Engine.isInCheck(State.turn);
-                if (State.isCheck) { AudioSys.playCheck(); State.stats.checks++; }
-                MenuSystem.updateStatsUI();
+                if (State.isCheck) AudioSys.playCheck(); 
 
                 const allLegalMoves = Engine.getAllLegalMoves(State.turn);
                 const isThreefold = Engine.isThreefoldRepetition();
@@ -1128,7 +1222,7 @@
                 this.updateHUD(); this.saveState();
 
                 if (State.turn !== State.playerColor) {
-                    setTimeout(() => this.processAITurn(), 100);
+                    setTimeout(() => this.processAITurn(), 200); // Thinking delay
                 }
             },
 
@@ -1137,15 +1231,15 @@
                 setTimeout(() => {
                     document.getElementById('game-over-screen').classList.remove('hidden-layer');
                     if (isCheckmate) {
-                        document.getElementById('fatality-title').innerText = "SKAKMAT";
-                        document.getElementById('winner-text').innerText = isPlayerWin ? "KEMENANGAN ANDA" : "KEMENANGAN AI";
+                        document.getElementById('fatality-title').innerText = "CHECKMATE";
+                        document.getElementById('winner-text').innerText = isPlayerWin ? "KAMU MENANG" : "AI MENANG";
                         document.getElementById('winner-text').style.color = isPlayerWin ? "var(--theme-glow)" : "#888";
                     } else {
                         document.getElementById('fatality-title').innerText = isThreefold ? "REPETISI" : (isDrawRule ? "ATURAN 50 LANGKAH" : "STALEMATE");
-                        document.getElementById('winner-text').innerText = "SERI";
+                        document.getElementById('winner-text').innerText = "SERI / DRAW";
                         document.getElementById('winner-text').style.color = "#aaaaaa";
                     }
-                }, 1000); 
+                }, 1500 * State.timeScale); 
             },
 
             updateHUD() {
@@ -1159,7 +1253,7 @@
                     statusP.innerText = "GILIRAN ANDA"; statusP.style.color = 'var(--theme-glow)';
                     statusAI.innerText = "MENUNGGU"; statusAI.style.color = 'gray';
                 } else {
-                    statusAI.innerText = "MENGANALISIS"; statusAI.style.color = '#fff';
+                    statusAI.innerText = "MENGANALISIS..."; statusAI.style.color = '#fff';
                     statusP.innerText = "MENUNGGU"; statusP.style.color = 'gray';
                 }
             },
@@ -1168,15 +1262,17 @@
                 if (State.gameState !== 'IDLE') return;
                 
                 const depth = 3; 
+                const oldEval = State.currentEval;
                 
+                // Simulated thinking delay (UI feedback)
                 setTimeout(() => {
                     const bestMove = SigmaAI.getBestMove(Engine, depth, State.turn);
                     if (bestMove) {
                         const visualPiece = State.visualPieces.find(vp => vp.logicalX === bestMove.from.x && vp.logicalY === bestMove.from.y);
                         visualPiece.piece.logicalX_old = bestMove.from.x; visualPiece.piece.logicalY_old = bestMove.from.y;
-                        Renderer.executeMoveAnimation(visualPiece, bestMove);
+                        Renderer.executeMoveAnimation(visualPiece, bestMove, oldEval);
                     }
-                }, 50);
+                }, 500);
             }
         };
 
@@ -1206,7 +1302,7 @@
             if (move && State.selectedSquare) {
                 const visualPiece = State.visualPieces.find(vp => vp.logicalX === State.selectedSquare.x && vp.logicalY === State.selectedSquare.y);
                 visualPiece.piece.logicalX_old = State.selectedSquare.x; visualPiece.piece.logicalY_old = State.selectedSquare.y;
-                Renderer.executeMoveAnimation(visualPiece, move);
+                Renderer.executeMoveAnimation(visualPiece, move, State.currentEval);
                 return;
             }
 
@@ -1224,6 +1320,7 @@
         // --- RENDER LOOP ---
         function renderLoop() {
             const ctx = Renderer.ctx; const cs = Renderer.cellSize; const theme = THEMES[State.activeTheme];
+            const dtScale = State.timeScale;
 
             if (State.camera.shakeIntensity > 0) {
                 State.camera.shakeX = MathUtils.random(-State.camera.shakeIntensity, State.camera.shakeIntensity);
@@ -1242,7 +1339,7 @@
 
             ctx.save(); ctx.translate(State.camera.shakeX, State.camera.shakeY);
 
-            ctx.strokeStyle = theme.glowDim; ctx.lineWidth = 2;
+            ctx.strokeStyle = theme.glowDim; ctx.lineWidth = 1;
             ctx.strokeRect(Renderer.offsetX, Renderer.offsetY, cs * 8, cs * 8);
 
             for (let y = 0; y < 8; y++) {
@@ -1258,16 +1355,16 @@
                     
                     ctx.fillRect(px, py, cs, cs);
                     
-                    // Notasi Aljabar (Koordinat a-h, 1-8)
+                    // Notasi Koordinat Premium
                     ctx.fillStyle = theme.coordColor;
-                    ctx.font = `bold ${Math.max(10, cs * 0.15)}px Arial`;
+                    ctx.font = `600 ${Math.max(10, cs * 0.15)}px 'Inter'`;
                     ctx.textAlign = 'left'; ctx.textBaseline = 'top';
                     if (vx === 0) { 
-                        ctx.fillText(8 - y, px + 2, py + 2);
+                        ctx.fillText(8 - y, px + 4, py + 4);
                     }
                     if (vy === 7) { 
                         ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
-                        ctx.fillText(String.fromCharCode(97 + x), px + cs - 2, py + cs - 2);
+                        ctx.fillText(String.fromCharCode(97 + x), px + cs - 4, py + cs - 4);
                     }
                     
                     if (State.selectedSquare && State.selectedSquare.x === x && State.selectedSquare.y === y) {
@@ -1284,16 +1381,19 @@
                 }
             }
 
+            // Move Hints
             State.validMoves.forEach(m => {
                 let vx = State.playerColor === 'w' ? m.to.x : 7 - m.to.x;
                 let vy = State.playerColor === 'w' ? m.to.y : 7 - m.to.y;
                 const px = Renderer.offsetX + vx * cs; const py = Renderer.offsetY + vy * cs;
                 
                 if (m.to.target || m.to.isEP) {
-                    ctx.fillStyle = `rgba(255, 0, 0, ${0.3 + Math.sin(Date.now() / 150) * 0.2})`;
-                    ctx.fillRect(px, py, cs, cs); ctx.strokeStyle = '#ff0000'; ctx.lineWidth = 2; ctx.strokeRect(px, py, cs, cs);
+                    // Capture hint rings
+                    ctx.strokeStyle = theme.glowDim; ctx.lineWidth = 4;
+                    ctx.beginPath(); ctx.arc(px + cs/2, py + cs/2, cs*0.4, 0, Math.PI*2); ctx.stroke();
                 } else {
-                    ctx.fillStyle = theme.glowDim; ctx.beginPath(); ctx.arc(px + cs/2, py + cs/2, cs*0.15, 0, Math.PI*2); ctx.fill();
+                    // Normal move dot
+                    ctx.fillStyle = theme.glowDim; ctx.beginPath(); ctx.arc(px + cs/2, py + cs/2, cs*0.12, 0, Math.PI*2); ctx.fill();
                 }
             });
 
@@ -1302,11 +1402,11 @@
                 let yB = State.playerColor === 'w' ? b.renderY : 7 - b.renderY;
                 return yA - yB;
             });
-            State.visualPieces.forEach(p => { p.update(); p.draw(ctx, cs, Renderer.offsetX, Renderer.offsetY); });
+            State.visualPieces.forEach(p => { p.update(dtScale); p.draw(ctx, cs, Renderer.offsetX, Renderer.offsetY); });
 
             if(State.particles.length > 200) State.particles.splice(0, State.particles.length - 200);
             State.particles = State.particles.filter(p => p.life > 0);
-            State.particles.forEach(p => { p.update(); p.draw(ctx); });
+            State.particles.forEach(p => { p.update(dtScale); p.draw(ctx); });
 
             ctx.restore(); requestAnimationFrame(renderLoop);
         }
