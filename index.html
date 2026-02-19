@@ -5,17 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Sigma Chess RPG</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
         body, html {
             margin: 0; padding: 0; width: 100%; height: 100%;
-            background-color: #050505; 
-            color: #fff;
+            background-color: #080808; 
+            color: #e0e0e0;
             overflow: hidden;
-            font-family: 'Courier New', Courier, monospace;
+            font-family: 'Inter', sans-serif;
             touch-action: none;
             user-select: none;
             -webkit-user-select: none;
         }
+        h1, h2, h3, .serif-text { font-family: 'Cinzel', serif; }
+
         #gameCanvas {
             display: block;
             width: 100%;
@@ -30,8 +33,8 @@
         .menu-layer {
             position: absolute;
             inset: 0;
-            background: rgba(5, 5, 5, 0.95);
-            backdrop-filter: blur(15px);
+            background: rgba(8, 8, 8, 0.85);
+            backdrop-filter: blur(20px);
             z-index: 50;
             display: flex;
             flex-direction: column;
@@ -42,16 +45,20 @@
         }
         .hidden-layer { display: none !important; }
         
-        /* Glitch & Glow Effects */
-        .neon-text { text-shadow: 0 0 5px var(--theme-glow), 0 0 10px var(--theme-glow-dim); }
-        .blood-text { text-shadow: 0 0 10px rgba(255, 0, 0, 0.8), 0 0 20px rgba(255, 0, 0, 0.4); }
+        /* Elegant Effects */
+        .accent-text { 
+            color: var(--theme-glow); 
+            text-shadow: 0 0 20px var(--theme-glow-dim);
+        }
+        
         .fatality-text { 
             font-size: clamp(3rem, 10vw, 6rem); 
-            font-weight: 900; color: #ff0000;
-            text-shadow: 0 0 20px #ff0000, 4px 4px 0px #880000, -4px -4px 0px #330000;
-            letter-spacing: clamp(2px, 2vw, 10px);
-            animation: shake 0.5s infinite;
+            font-weight: 900; 
+            color: var(--theme-glow);
+            text-shadow: 0 0 30px var(--theme-glow-dim);
+            letter-spacing: clamp(4px, 3vw, 15px);
             text-align: center;
+            font-family: 'Cinzel', serif;
         }
         
         /* Evaluation Bar */
@@ -60,154 +67,139 @@
             left: 20px;
             top: 50%;
             transform: translateY(-50%);
-            width: 16px;
+            width: 12px;
             height: 60%;
-            background-color: #333;
-            border: 2px solid var(--theme-glow-dim);
-            border-radius: 8px;
+            background-color: rgba(10, 10, 10, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
             overflow: hidden;
             display: flex;
             flex-direction: column-reverse;
             pointer-events: auto;
-            box-shadow: 0 0 10px rgba(0,0,0,0.8);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
             transition: all 0.3s ease;
         }
         #eval-fill {
             width: 100%;
             height: 50%;
-            background-color: #fff; /* White advantage */
+            background-color: var(--theme-glow);
             transition: height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
         #eval-text-w, #eval-text-b {
             position: absolute;
             width: 100%;
             text-align: center;
-            font-size: 10px;
-            font-weight: bold;
-            color: #888;
+            font-size: 9px;
+            font-weight: 600;
+            color: rgba(255,255,255,0.5);
             z-index: 2;
-            padding: 2px 0;
+            padding: 4px 0;
+            font-family: 'Inter', sans-serif;
         }
         #eval-text-b { top: 0; }
         #eval-text-w { bottom: 0; color: #000; }
 
-        @keyframes shake {
-            0% { transform: translate(1px, 1px) rotate(0deg); }
-            10% { transform: translate(-1px, -2px) rotate(-1deg); }
-            20% { transform: translate(-3px, 0px) rotate(1deg); }
-            30% { transform: translate(3px, 2px) rotate(0deg); }
-            40% { transform: translate(1px, -1px) rotate(1deg); }
-            50% { transform: translate(-1px, 2px) rotate(-1deg); }
-            60% { transform: translate(-3px, 1px) rotate(0deg); }
-            70% { transform: translate(3px, 1px) rotate(-1deg); }
-            80% { transform: translate(-1px, -1px) rotate(1deg); }
-            90% { transform: translate(1px, 2px) rotate(0deg); }
-            100% { transform: translate(1px, -2px) rotate(-1deg); }
+        .luxury-panel {
+            background: rgba(15, 15, 15, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(15px);
+            border-radius: 6px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
         }
-
-        @keyframes pulse-border {
-            0% { border-color: rgba(255, 255, 255, 0.1); }
-            50% { border-color: var(--theme-glow); }
-            100% { border-color: rgba(255, 255, 255, 0.1); }
-        }
-        .sigma-panel {
-            background: rgba(10, 10, 15, 0.9);
+        
+        .btn-luxury {
+            background: rgba(20, 20, 20, 0.5);
             border: 1px solid var(--theme-glow-dim);
-            backdrop-filter: blur(12px);
-            animation: pulse-border 4s infinite;
-        }
-        .btn-sigma {
-            background: transparent;
-            border: 2px solid var(--theme-glow);
             color: var(--theme-text);
-            padding: 12px 24px;
-            font-size: clamp(1rem, 3vw, 1.5rem);
-            font-weight: bold;
+            padding: 14px 28px;
+            font-size: clamp(0.85rem, 2vw, 1rem);
+            font-weight: 400;
             text-transform: uppercase;
-            letter-spacing: 2px;
+            letter-spacing: 4px;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.4s ease;
             position: relative;
             overflow: hidden;
             width: 100%;
+            border-radius: 3px;
         }
-        .btn-sigma:hover {
+        .btn-luxury:hover {
             background: var(--theme-glow);
-            color: #000;
-            box-shadow: 0 0 20px var(--theme-glow);
-            transform: scale(1.05);
+            color: #050505;
+            box-shadow: 0 0 20px var(--theme-glow-dim);
+            border-color: var(--theme-glow);
         }
+        
         @media (max-width: 640px) {
             .hud-container { flex-direction: column; gap: 0.5rem; align-items: center; }
-            .sigma-panel { padding: 0.5rem 1rem; width: 100%; justify-content: center; }
+            .luxury-panel { padding: 0.5rem 1rem; width: 100%; justify-content: center; }
             .desktop-only { display: none; }
-            #eval-bar-container { left: 5px; width: 10px; height: 50%; } /* Slimmer on mobile */
+            #eval-bar-container { left: 5px; width: 8px; height: 50%; }
         }
     </style>
 </head>
-<body style="--theme-glow: #00ffff; --theme-glow-dim: rgba(0,255,255,0.3); --theme-text: #00ffff;">
+<body style="--theme-glow: #d4af37; --theme-glow-dim: rgba(212,175,55,0.3); --theme-text: #d4af37;">
 
     <!-- MAIN MENU -->
     <div id="main-menu" class="menu-layer">
-        <h1 class="text-4xl sm:text-6xl font-black mb-2 tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-600 text-center" style="filter: drop-shadow(0 0 10px rgba(0,255,255,0.5))">SIGMA CHESS</h1>
-        <h2 class="text-lg sm:text-xl text-red-500 font-bold mb-10 tracking-widest blood-text text-center">GRANDMASTER EDITION</h2>
+        <h1 class="text-4xl sm:text-6xl mb-2 text-center accent-text" style="letter-spacing: 8px;">ROYAL CHESS</h1>
+        <h2 class="text-xs sm:text-sm text-gray-400 mb-12 uppercase tracking-[0.5em] text-center font-light">Grandmaster Edition</h2>
         
         <div class="space-y-4 flex flex-col w-11/12 max-w-xs">
-            <button class="btn-sigma" onclick="MenuSystem.showSideSelection()">PLAY</button>
-            <button class="btn-sigma" onclick="MenuSystem.showStatsMenu()" style="border-color:#ffaa00; color:#ffaa00;">STATISTICS</button>
-            <button class="btn-sigma" onclick="MenuSystem.showSettings()" style="border-color:#aaa; color:#aaa;">SETTINGS</button>
+            <button class="btn-luxury" onclick="MenuSystem.showSideSelection()">PLAY</button>
+            <button class="btn-luxury" onclick="MenuSystem.showStatsMenu()" style="border-color:rgba(255,255,255,0.2); color:#ccc;">STATISTICS</button>
+            <button class="btn-luxury" onclick="MenuSystem.showSettings()" style="border-color:rgba(255,255,255,0.2); color:#ccc;">SETTINGS</button>
         </div>
     </div>
 
     <!-- SIDE SELECTION -->
     <div id="side-menu" class="menu-layer hidden-layer">
-        <h2 class="text-2xl sm:text-3xl font-bold mb-8 text-white tracking-widest neon-text text-center">CHOOSE FACTION</h2>
-        <div class="flex flex-col sm:flex-row gap-4 w-11/12 max-w-md">
-            <button class="btn-sigma" style="--theme-glow:#fff; --theme-text:#fff" onclick="GameCore.initGame('w')">WHITE</button>
-            <button class="btn-sigma" style="--theme-glow:#ff3333; --theme-text:#ff3333" onclick="GameCore.initGame('b')">BLACK</button>
+        <h2 class="text-2xl sm:text-3xl mb-10 text-white text-center serif-text" style="letter-spacing: 4px;">CHOOSE FACTION</h2>
+        <div class="flex flex-col sm:flex-row gap-5 w-11/12 max-w-md">
+            <button class="btn-luxury" style="--theme-glow:#fff; --theme-text:#fff" onclick="GameCore.initGame('w')">WHITE</button>
+            <button class="btn-luxury" style="--theme-glow:#888; --theme-text:#aaa" onclick="GameCore.initGame('b')">BLACK</button>
         </div>
-        <button class="mt-6 text-gray-500 hover:text-white transition tracking-widest font-bold" onclick="GameCore.initGame('random')">[ RANDOM ]</button>
-        <button class="mt-12 text-sm text-cyan-500 hover:text-cyan-300 tracking-widest" onclick="MenuSystem.showMainMenu()"><< BACK</button>
+        <button class="mt-8 text-gray-500 hover:text-white transition tracking-[0.3em] text-sm uppercase" onclick="GameCore.initGame('random')">Random Selection</button>
+        <button class="mt-16 text-xs text-gray-500 hover:text-gray-300 tracking-[0.2em] uppercase" onclick="MenuSystem.showMainMenu()">Return</button>
     </div>
 
     <!-- SETTINGS -->
     <div id="settings-menu" class="menu-layer hidden-layer">
-        <h2 class="text-2xl sm:text-3xl font-bold mb-8 text-white tracking-widest text-center">SYSTEM OVERRIDE</h2>
-        <div class="space-y-4 flex flex-col w-11/12 max-w-xs">
-            <p class="text-sm text-gray-400 text-center tracking-widest">SKIN / THEME</p>
-            <button class="btn-sigma" style="--theme-glow:#00ffff; --theme-text:#00ffff" onclick="MenuSystem.setTheme('cyberpunk')">CYBERPUNK</button>
-            <button class="btn-sigma" style="--theme-glow:#ff0000; --theme-text:#ff0000" onclick="MenuSystem.setTheme('bloodmoon')">BLOOD MOON</button>
+        <h2 class="text-2xl sm:text-3xl mb-10 text-white text-center serif-text" style="letter-spacing: 4px;">AESTHETICS</h2>
+        <div class="space-y-5 flex flex-col w-11/12 max-w-xs">
+            <button class="btn-luxury" style="--theme-glow:#d4af37; --theme-text:#d4af37" onclick="MenuSystem.setTheme('obsidian')">OBSIDIAN GOLD</button>
+            <button class="btn-luxury" style="--theme-glow:#ffffff; --theme-text:#ffffff" onclick="MenuSystem.setTheme('ivory')">IVORY MARBLE</button>
         </div>
-        <button class="mt-12 text-sm text-gray-400 hover:text-white tracking-widest" onclick="MenuSystem.showMainMenu()"><< BACK</button>
+        <button class="mt-16 text-xs text-gray-500 hover:text-gray-300 tracking-[0.2em] uppercase" onclick="MenuSystem.showMainMenu()">Return</button>
     </div>
 
     <!-- STATISTICS -->
     <div id="stats-menu" class="menu-layer hidden-layer">
-        <h2 class="text-2xl sm:text-3xl font-bold mb-8 text-white tracking-widest text-center neon-text" style="color:#ffaa00;">BATTLE TELEMETRY</h2>
-        <div class="w-11/12 max-w-md sigma-panel p-6 rounded-lg text-left space-y-4 font-bold text-lg">
-            <div class="flex justify-between border-b border-gray-700 pb-2">
-                <span class="text-cyan-400">TOTAL TURNS:</span> <span id="stat-turns" class="text-white">0</span>
+        <h2 class="text-2xl sm:text-3xl mb-8 text-center serif-text accent-text" style="letter-spacing: 4px;">TELEMETRY</h2>
+        <div class="w-11/12 max-w-md luxury-panel p-8 text-left space-y-5 text-sm font-light tracking-wider">
+            <div class="flex justify-between border-b border-gray-800 pb-3">
+                <span class="text-gray-400">TOTAL TURNS</span> <span id="stat-turns" class="text-white font-medium">0</span>
             </div>
-            <div class="flex justify-between border-b border-gray-700 pb-2">
-                <span class="text-red-400">ENEMIES SLAIN:</span> <span id="stat-kills" class="text-white">0</span>
+            <div class="flex justify-between border-b border-gray-800 pb-3">
+                <span class="text-gray-400">ENEMIES CAPTURED</span> <span id="stat-kills" class="text-white font-medium">0</span>
             </div>
-            <div class="flex justify-between border-b border-gray-700 pb-2">
-                <span class="text-yellow-400">CHECKS DELIVERED:</span> <span id="stat-checks" class="text-white">0</span>
+            <div class="flex justify-between border-b border-gray-800 pb-3">
+                <span class="text-gray-400">CHECKS DELIVERED</span> <span id="stat-checks" class="text-white font-medium">0</span>
             </div>
-            <div class="flex justify-between border-b border-gray-700 pb-2">
-                <span class="text-purple-400">FATALITIES:</span> <span id="stat-fatalities" class="text-white">0</span>
+            <div class="flex justify-between border-b border-gray-800 pb-3">
+                <span class="text-gray-400">VICTORIES</span> <span id="stat-fatalities" class="text-white font-medium">0</span>
             </div>
         </div>
-        <button class="mt-12 text-sm text-gray-400 hover:text-white tracking-widest" onclick="MenuSystem.showMainMenu()"><< BACK</button>
+        <button class="mt-16 text-xs text-gray-500 hover:text-gray-300 tracking-[0.2em] uppercase" onclick="MenuSystem.showMainMenu()">Return</button>
     </div>
 
     <!-- GAME OVER SCREEN -->
     <div id="game-over-screen" class="menu-layer hidden-layer bg-black/95">
-        <h1 id="fatality-title" class="fatality-text mb-4">SKAKMAT</h1>
-        <p id="winner-text" class="text-xl sm:text-2xl font-bold text-white tracking-widest mb-12 text-center px-4">PLAYER WINS</p>
-        <div class="w-11/12 max-w-xs space-y-4">
-            <button class="btn-sigma" onclick="GameCore.undo()" id="btn-undo-death" style="--theme-glow:#00ffff;">TIME TRAVEL (UNDO)</button>
-            <button class="btn-sigma" onclick="MenuSystem.showMainMenu()" style="--theme-glow:#ffaa00;">RETURN TO BASE</button>
+        <h1 id="fatality-title" class="fatality-text mb-4">CHECKMATE</h1>
+        <p id="winner-text" class="text-sm sm:text-base font-light text-gray-300 tracking-[0.4em] mb-16 text-center px-4 uppercase">White Triumphs</p>
+        <div class="w-11/12 max-w-xs space-y-5">
+            <button class="btn-luxury" onclick="GameCore.undo()" id="btn-undo-death" style="--theme-glow:#ccc;">REVERT TIME</button>
+            <button class="btn-luxury" onclick="MenuSystem.showMainMenu()" style="--theme-glow:#d4af37;">MAIN MENU</button>
         </div>
     </div>
 
@@ -222,47 +214,47 @@
         </div>
 
         <!-- TOP PANELS -->
-        <div class="w-full p-2 sm:p-4 flex justify-between items-start pointer-events-none hud-container pl-12 sm:pl-16">
-            <div class="sigma-panel px-4 sm:px-6 py-2 sm:py-3 rounded-md shadow-2xl pointer-events-auto flex items-center gap-3 w-full sm:w-auto">
-                <div id="player-icon" class="w-8 h-8 sm:w-12 sm:h-12 rounded-full flex items-center justify-center border-2 text-lg sm:text-2xl bg-gray-900">♟</div>
+        <div class="w-full p-4 sm:p-6 flex justify-between items-start pointer-events-none hud-container pl-12 sm:pl-20">
+            <div class="luxury-panel px-5 sm:px-6 py-3 sm:py-4 pointer-events-auto flex items-center gap-4 w-full sm:w-auto">
+                <div id="player-icon" class="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center border text-lg bg-black font-serif">♟</div>
                 <div class="flex-1">
-                    <h1 class="text-sm sm:text-xl font-black tracking-widest neon-text" id="player-name">PLAYER</h1>
-                    <p class="text-[10px] sm:text-xs opacity-70" id="status-player">GILIRANMU</p>
+                    <h1 class="text-xs sm:text-sm font-semibold tracking-[0.2em] text-white uppercase" id="player-name">Player</h1>
+                    <p class="text-[9px] sm:text-[10px] text-gray-500 tracking-widest uppercase mt-1" id="status-player">Your Turn</p>
                 </div>
             </div>
             
-            <div class="sigma-panel px-4 sm:px-6 py-2 sm:py-3 rounded-md shadow-2xl pointer-events-auto flex items-center gap-3 flex-row-reverse text-right w-full sm:w-auto mt-2 sm:mt-0">
-                <div id="enemy-icon" class="w-8 h-8 sm:w-12 sm:h-12 rounded-full flex items-center justify-center border-2 text-lg sm:text-2xl bg-gray-900">♙</div>
+            <div class="luxury-panel px-5 sm:px-6 py-3 sm:py-4 pointer-events-auto flex items-center gap-4 flex-row-reverse text-right w-full sm:w-auto mt-3 sm:mt-0">
+                <div id="enemy-icon" class="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center border text-lg bg-black font-serif">♙</div>
                 <div class="flex-1">
-                    <h1 class="text-sm sm:text-xl font-black tracking-widest blood-text" id="enemy-name">STOCKFISH (LITE)</h1>
-                    <p class="text-[10px] sm:text-xs opacity-70" id="status-ai">MENUNGGU</p>
+                    <h1 class="text-xs sm:text-sm font-semibold tracking-[0.2em] text-white uppercase" id="enemy-name">Grandmaster AI</h1>
+                    <p class="text-[9px] sm:text-[10px] text-gray-500 tracking-widest uppercase mt-1" id="status-ai">Waiting</p>
                 </div>
             </div>
         </div>
         
         <!-- Center Check Warning -->
-        <div id="check-warning" class="absolute top-1/4 left-1/2 transform -translate-x-1/2 text-red-500 font-black text-xl sm:text-3xl tracking-widest animate-pulse hidden-layer bg-black/50 px-6 py-2 rounded-full border border-red-500 backdrop-blur-sm pointer-events-none">
-            >> SKAK <<
+        <div id="check-warning" class="absolute top-1/4 left-1/2 transform -translate-x-1/2 accent-text font-serif text-xl sm:text-2xl tracking-[0.3em] animate-pulse hidden-layer bg-black/60 px-8 py-3 rounded-sm border border-white/10 backdrop-blur-md pointer-events-none uppercase">
+            Check
         </div>
 
         <!-- BOTTOM CONTROLS & MINI STATS -->
-        <div class="w-full p-4 flex justify-between items-end pointer-events-none pl-12 sm:pl-16">
-            <div class="sigma-panel px-3 py-2 rounded pointer-events-auto text-xs sm:text-sm font-bold opacity-80 desktop-only flex gap-4">
-                <span class="text-red-400">⚔️ <span id="mini-kills">0</span></span>
-                <span class="text-yellow-400">⏱️ <span id="mini-turns">0</span></span>
+        <div class="w-full p-4 sm:p-6 flex justify-between items-end pointer-events-none pl-12 sm:pl-20">
+            <div class="luxury-panel px-4 py-3 pointer-events-auto text-[10px] sm:text-xs font-light text-gray-400 desktop-only flex gap-6 tracking-widest uppercase">
+                <span>Captures: <span id="mini-kills" class="text-white">0</span></span>
+                <span>Moves: <span id="mini-turns" class="text-white">0</span></span>
             </div>
 
             <!-- UNDO / REDO CONTROLS -->
-            <div class="flex gap-2 sm:gap-4 pointer-events-auto w-full sm:w-auto justify-end">
-                <button id="btn-undo" class="btn-sigma text-xs sm:text-sm py-2 px-3 sm:px-4 opacity-30 pointer-events-none" onclick="GameCore.undo()">◄ UNDO</button>
-                <button id="btn-redo" class="btn-sigma text-xs sm:text-sm py-2 px-3 sm:px-4 opacity-30 pointer-events-none" onclick="GameCore.redo()">REDO ►</button>
+            <div class="flex gap-3 sm:gap-4 pointer-events-auto w-full sm:w-auto justify-end">
+                <button id="btn-undo" class="btn-luxury text-[10px] sm:text-xs py-2 px-4 sm:px-6 opacity-30 pointer-events-none" onclick="GameCore.undo()">Undo</button>
+                <button id="btn-redo" class="btn-luxury text-[10px] sm:text-xs py-2 px-4 sm:px-6 opacity-30 pointer-events-none" onclick="GameCore.redo()">Redo</button>
             </div>
         </div>
     </div>
 
     <!-- Cinematic Bars -->
-    <div id="cinematic-bar-top" class="ui-layer top-0 left-0 w-full h-16 sm:h-24 bg-black transition-transform duration-200 -translate-y-full"></div>
-    <div id="cinematic-bar-bottom" class="ui-layer bottom-0 left-0 w-full h-16 sm:h-24 bg-black transition-transform duration-200 translate-y-full"></div>
+    <div id="cinematic-bar-top" class="ui-layer top-0 left-0 w-full h-16 sm:h-24 bg-[#050505] transition-transform duration-300 -translate-y-full border-b border-white/5"></div>
+    <div id="cinematic-bar-bottom" class="ui-layer bottom-0 left-0 w-full h-16 sm:h-24 bg-[#050505] transition-transform duration-300 translate-y-full border-t border-white/5"></div>
 
     <canvas id="gameCanvas"></canvas>
 
@@ -282,21 +274,21 @@
         };
 
         const THEMES = {
-            cyberpunk: {
-                darkSquare: '#121218', lightSquare: '#1e1e28',
-                highlight: 'rgba(0, 255, 255, 0.4)',
-                playerText: '#00ffff', enemyText: '#ff3333',
-                particlePlayer: '#00ffff', particleEnemy: '#ff0000',
-                glow: '#00ffff', glowDim: 'rgba(0,255,255,0.3)',
-                coordColor: '#444'
+            obsidian: {
+                darkSquare: '#121212', lightSquare: '#262626',
+                highlight: 'rgba(212, 175, 55, 0.3)', // Soft Gold
+                playerText: '#d4af37', enemyText: '#aaaaaa',
+                particlePlayer: '#d4af37', particleEnemy: '#dddddd',
+                glow: '#d4af37', glowDim: 'rgba(212, 175, 55, 0.2)',
+                coordColor: '#666'
             },
-            bloodmoon: {
-                darkSquare: '#1a0505', lightSquare: '#330a0a',
-                highlight: 'rgba(255, 50, 50, 0.4)',
-                playerText: '#ffaaaa', enemyText: '#ff0000',
-                particlePlayer: '#ffaaaa', particleEnemy: '#880000',
-                glow: '#ff0000', glowDim: 'rgba(255,0,0,0.3)',
-                coordColor: '#622'
+            ivory: {
+                darkSquare: '#4a3b32', lightSquare: '#e8dcca',
+                highlight: 'rgba(255, 255, 255, 0.4)',
+                playerText: '#ffffff', enemyText: '#111111',
+                particlePlayer: '#e8dcca', particleEnemy: '#4a3b32',
+                glow: '#ffffff', glowDim: 'rgba(255, 255, 255, 0.3)',
+                coordColor: '#887'
             }
         };
 
@@ -346,7 +338,7 @@
             selectedSquare: null, validMoves: [],
             camera: { x: 0, y: 0, shakeX: 0, shakeY: 0, shakeIntensity: 0 },
             invertColors: false, particles: [], visualPieces: [],
-            activeTheme: 'cyberpunk', isCheck: false,
+            activeTheme: 'obsidian', isCheck: false,
             history: [], historyIndex: -1, currentEval: 0,
             stats: { turns: 0, kills: 0, checks: 0, fatalities: 0 }
         };
@@ -977,15 +969,14 @@
                     
                     if (isFatalityCheck) {
                         State.invertColors = true; AudioSys.playFatality(); State.stats.fatalities++;
-                        this.createExplosion(toX, explodeY, '#ff0000', "FATALITY!", true);
+                        this.createExplosion(toX, explodeY, theme.glow, "SKAKMAT", true);
                         visualPiece.scale = 2.0;
                         await new Promise(r => setTimeout(r, 150));
                         State.invertColors = false;
                         await new Promise(r => setTimeout(r, 400));
                     } else {
                         AudioSys.playCapture(); State.stats.kills++;
-                        const dmg = PIECE_VALUES[targetVisual.piece.type] * MathUtils.random(0.8, 1.2);
-                        const dmgText = Math.random() > 0.6 ? `CRIT! ${Math.floor(dmg*1.5)}` : `-${Math.floor(dmg)}`;
+                        const dmgText = "CAPTURE";
                         this.createExplosion(toX, explodeY, color, dmgText);
                         visualPiece.scale = 1.4;
                     }
@@ -1026,8 +1017,9 @@
                 State.isCheck = false; State.history = []; State.historyIndex = -1;
                 State.stats = { turns: 0, kills: 0, checks: 0, fatalities: 0 };
                 
-                const pColorHex = State.playerColor === 'w' ? '#00ffff' : '#ff0000';
-                const eColorHex = State.playerColor === 'w' ? '#ff0000' : '#00ffff';
+                const theme = THEMES[State.activeTheme];
+                const pColorHex = State.playerColor === 'w' ? theme.glow : '#888';
+                const eColorHex = State.playerColor === 'w' ? '#888' : theme.glow;
                 document.getElementById('player-icon').innerText = State.playerColor === 'w' ? '♙' : '♟';
                 document.getElementById('player-icon').style.borderColor = pColorHex; document.getElementById('player-icon').style.color = pColorHex;
                 document.getElementById('enemy-icon').innerText = State.playerColor === 'w' ? '♟' : '♙';
@@ -1146,11 +1138,11 @@
                     document.getElementById('game-over-screen').classList.remove('hidden-layer');
                     if (isCheckmate) {
                         document.getElementById('fatality-title').innerText = "SKAKMAT";
-                        document.getElementById('winner-text').innerText = isPlayerWin ? ">> PLAYER WINS <<" : ">> NEMESIS WINS <<";
-                        document.getElementById('winner-text').style.color = isPlayerWin ? "#00ffff" : "#ff0000";
+                        document.getElementById('winner-text').innerText = isPlayerWin ? "KEMENANGAN ANDA" : "KEMENANGAN AI";
+                        document.getElementById('winner-text').style.color = isPlayerWin ? "var(--theme-glow)" : "#888";
                     } else {
-                        document.getElementById('fatality-title').innerText = isThreefold ? "REPETITION" : (isDrawRule ? "50-MOVE RULE" : "STALEMATE");
-                        document.getElementById('winner-text').innerText = "DRAW / SERI";
+                        document.getElementById('fatality-title').innerText = isThreefold ? "REPETISI" : (isDrawRule ? "ATURAN 50 LANGKAH" : "STALEMATE");
+                        document.getElementById('winner-text').innerText = "SERI";
                         document.getElementById('winner-text').style.color = "#aaaaaa";
                     }
                 }, 1000); 
@@ -1164,10 +1156,10 @@
                 else checkWarn.classList.add('hidden-layer');
 
                 if (State.turn === State.playerColor) {
-                    statusP.innerText = ">> GILIRANMU <<"; statusP.style.color = '#00ffff';
+                    statusP.innerText = "GILIRAN ANDA"; statusP.style.color = 'var(--theme-glow)';
                     statusAI.innerText = "MENUNGGU"; statusAI.style.color = 'gray';
                 } else {
-                    statusAI.innerText = ">> MENGANALISIS <<"; statusAI.style.color = '#ff0000';
+                    statusAI.innerText = "MENGANALISIS"; statusAI.style.color = '#fff';
                     statusP.innerText = "MENUNGGU"; statusP.style.color = 'gray';
                 }
             },
