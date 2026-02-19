@@ -283,7 +283,7 @@
     <script>
         /**
          * =====================================================================
-         * SIGMA CHESS RPG V5 - PRO SIMULATOR (Elo 1500)
+         * SIGMA CHESS RPG V5.1 - PRO SIMULATOR (Elo 1500)
          * Architecture: S3 MIT Level - Pure Alpha-Beta Minimax & PST
          * Features: Algebraic Notation (SAN) History, Move Classification 
          * (Brilliant/Blunder), Slow-Mo Checkmate Fatality, Exact Evaluation.
@@ -977,6 +977,10 @@
                 this.offsetY = window.innerHeight > window.innerWidth ? (window.innerHeight - this.cellSize*8)/2 + 40 : (window.innerHeight - this.cellSize*8)/2 + 20;
             },
 
+            triggerScreenShake(intensity = 15) {
+                State.camera.shakeIntensity = intensity;
+            },
+
             triggerFatality(type, logicalX, logicalY) {
                 let vx = State.playerColor === 'w' ? logicalX : 7 - logicalX;
                 let vy = State.playerColor === 'w' ? logicalY : 7 - logicalY;
@@ -986,14 +990,14 @@
                 
                 if (type === 'CAPTURE') {
                     for(let i=0; i<30; i++) State.particles.push(new Particle(px, py, theme.glow));
-                    State.camera.shakeIntensity = 15;
+                    this.triggerScreenShake(15);
                 } else if (type === 'CHECKMATE') {
                     State.timeScale = 0.15; // Slow Mo Time Dilation
                     State.invertColors = true;
                     document.getElementById('slow-mo-overlay').style.opacity = '1';
                     
                     for(let i=0; i<150; i++) State.particles.push(new Particle(px, py, '#ff0000'));
-                    State.camera.shakeIntensity = 40;
+                    this.triggerScreenShake(40);
                     
                     setTimeout(() => {
                         State.invertColors = false;
