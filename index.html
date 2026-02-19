@@ -54,6 +54,43 @@
             text-align: center;
         }
         
+        /* Evaluation Bar */
+        #eval-bar-container {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 16px;
+            height: 60%;
+            background-color: #333;
+            border: 2px solid var(--theme-glow-dim);
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column-reverse;
+            pointer-events: auto;
+            box-shadow: 0 0 10px rgba(0,0,0,0.8);
+            transition: all 0.3s ease;
+        }
+        #eval-fill {
+            width: 100%;
+            height: 50%;
+            background-color: #fff; /* White advantage */
+            transition: height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        #eval-text-w, #eval-text-b {
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            font-size: 10px;
+            font-weight: bold;
+            color: #888;
+            z-index: 2;
+            padding: 2px 0;
+        }
+        #eval-text-b { top: 0; }
+        #eval-text-w { bottom: 0; color: #000; }
+
         @keyframes shake {
             0% { transform: translate(1px, 1px) rotate(0deg); }
             10% { transform: translate(-1px, -2px) rotate(-1deg); }
@@ -100,11 +137,11 @@
             box-shadow: 0 0 20px var(--theme-glow);
             transform: scale(1.05);
         }
-        /* Mobile optimisations */
         @media (max-width: 640px) {
             .hud-container { flex-direction: column; gap: 0.5rem; align-items: center; }
             .sigma-panel { padding: 0.5rem 1rem; width: 100%; justify-content: center; }
             .desktop-only { display: none; }
+            #eval-bar-container { left: 5px; width: 10px; height: 50%; } /* Slimmer on mobile */
         }
     </style>
 </head>
@@ -113,7 +150,7 @@
     <!-- MAIN MENU -->
     <div id="main-menu" class="menu-layer">
         <h1 class="text-4xl sm:text-6xl font-black mb-2 tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-600 text-center" style="filter: drop-shadow(0 0 10px rgba(0,255,255,0.5))">SIGMA CHESS</h1>
-        <h2 class="text-lg sm:text-xl text-red-500 font-bold mb-10 tracking-widest blood-text text-center">FATALITY EDITION</h2>
+        <h2 class="text-lg sm:text-xl text-red-500 font-bold mb-10 tracking-widest blood-text text-center">GRANDMASTER EDITION</h2>
         
         <div class="space-y-4 flex flex-col w-11/12 max-w-xs">
             <button class="btn-sigma" onclick="MenuSystem.showSideSelection()">PLAY</button>
@@ -164,7 +201,7 @@
         <button class="mt-12 text-sm text-gray-400 hover:text-white tracking-widest" onclick="MenuSystem.showMainMenu()"><< BACK</button>
     </div>
 
-    <!-- GAME OVER / FATALITY SCREEN -->
+    <!-- GAME OVER SCREEN -->
     <div id="game-over-screen" class="menu-layer hidden-layer bg-black/95">
         <h1 id="fatality-title" class="fatality-text mb-4">SKAKMAT</h1>
         <p id="winner-text" class="text-xl sm:text-2xl font-bold text-white tracking-widest mb-12 text-center px-4">PLAYER WINS</p>
@@ -176,8 +213,16 @@
 
     <!-- GAME HUD -->
     <div id="game-hud" class="ui-layer top-0 left-0 w-full h-full pointer-events-none hidden-layer flex flex-col justify-between">
+        
+        <!-- Evaluation Bar -->
+        <div id="eval-bar-container">
+            <div id="eval-text-b" class="desktop-only"></div>
+            <div id="eval-fill"></div>
+            <div id="eval-text-w" class="desktop-only"></div>
+        </div>
+
         <!-- TOP PANELS -->
-        <div class="w-full p-2 sm:p-4 flex justify-between items-start pointer-events-none hud-container">
+        <div class="w-full p-2 sm:p-4 flex justify-between items-start pointer-events-none hud-container pl-12 sm:pl-16">
             <div class="sigma-panel px-4 sm:px-6 py-2 sm:py-3 rounded-md shadow-2xl pointer-events-auto flex items-center gap-3 w-full sm:w-auto">
                 <div id="player-icon" class="w-8 h-8 sm:w-12 sm:h-12 rounded-full flex items-center justify-center border-2 text-lg sm:text-2xl bg-gray-900">♟</div>
                 <div class="flex-1">
@@ -189,7 +234,7 @@
             <div class="sigma-panel px-4 sm:px-6 py-2 sm:py-3 rounded-md shadow-2xl pointer-events-auto flex items-center gap-3 flex-row-reverse text-right w-full sm:w-auto mt-2 sm:mt-0">
                 <div id="enemy-icon" class="w-8 h-8 sm:w-12 sm:h-12 rounded-full flex items-center justify-center border-2 text-lg sm:text-2xl bg-gray-900">♙</div>
                 <div class="flex-1">
-                    <h1 class="text-sm sm:text-xl font-black tracking-widest blood-text" id="enemy-name">NEMESIS</h1>
+                    <h1 class="text-sm sm:text-xl font-black tracking-widest blood-text" id="enemy-name">STOCKFISH (LITE)</h1>
                     <p class="text-[10px] sm:text-xs opacity-70" id="status-ai">MENUNGGU</p>
                 </div>
             </div>
@@ -201,8 +246,7 @@
         </div>
 
         <!-- BOTTOM CONTROLS & MINI STATS -->
-        <div class="w-full p-4 flex justify-between items-end pointer-events-none">
-            <!-- Mini Stats Left -->
+        <div class="w-full p-4 flex justify-between items-end pointer-events-none pl-12 sm:pl-16">
             <div class="sigma-panel px-3 py-2 rounded pointer-events-auto text-xs sm:text-sm font-bold opacity-80 desktop-only flex gap-4">
                 <span class="text-red-400">⚔️ <span id="mini-kills">0</span></span>
                 <span class="text-yellow-400">⏱️ <span id="mini-turns">0</span></span>
@@ -225,15 +269,15 @@
     <script>
         /**
          * =====================================================================
-         * SIGMA CHESS RPG V3 - FATALITY EDITION (FULL FIDE RULES)
+         * SIGMA CHESS RPG V4 - GRANDMASTER EDITION (Target Elo: ~1500)
          * Architecture: S3 MIT Level - Decoupled Logic & Visualization
-         * Featuring: Castling, En Passant, Promotion, 50-Move Rule, Stalemate
+         * Features: Minimax Alpha-Beta Pruning, PST Evaluation, FIDE Rules,
+         * Eval Bar, Algebraic Notation, Threefold Repetition.
          * =====================================================================
          */
 
         const MathUtils = {
             lerp: (a, b, t) => a + (b - a) * t,
-            distance: (x1, y1, x2, y2) => Math.sqrt((x2-x1)**2 + (y2-y1)**2),
             random: (min, max) => Math.random() * (max - min) + min
         };
 
@@ -243,18 +287,20 @@
                 highlight: 'rgba(0, 255, 255, 0.4)',
                 playerText: '#00ffff', enemyText: '#ff3333',
                 particlePlayer: '#00ffff', particleEnemy: '#ff0000',
-                glow: '#00ffff', glowDim: 'rgba(0,255,255,0.3)'
+                glow: '#00ffff', glowDim: 'rgba(0,255,255,0.3)',
+                coordColor: '#444'
             },
             bloodmoon: {
                 darkSquare: '#1a0505', lightSquare: '#330a0a',
                 highlight: 'rgba(255, 50, 50, 0.4)',
                 playerText: '#ffaaaa', enemyText: '#ff0000',
                 particlePlayer: '#ffaaaa', particleEnemy: '#880000',
-                glow: '#ff0000', glowDim: 'rgba(255,0,0,0.3)'
+                glow: '#ff0000', glowDim: 'rgba(255,0,0,0.3)',
+                coordColor: '#622'
             }
         };
 
-        const PIECE_VALUES = { 'p': 100, 'n': 300, 'b': 300, 'r': 500, 'q': 900, 'k': 9999 };
+        const PIECE_VALUES = { 'p': 100, 'n': 320, 'b': 330, 'r': 500, 'q': 900, 'k': 20000 };
         const PIECE_SYMBOLS = {
             'w': { 'p': '♙', 'n': '♘', 'b': '♗', 'r': '♖', 'q': '♕', 'k': '♔' },
             'b': { 'p': '♟', 'n': '♞', 'b': '♝', 'r': '♜', 'q': '♛', 'k': '♚' }
@@ -275,8 +321,7 @@
                 try {
                     const osc = this.ctx.createOscillator();
                     const gain = this.ctx.createGain();
-                    osc.type = type;
-                    osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                    osc.type = type; osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
                     gain.gain.setValueAtTime(vol, this.ctx.currentTime);
                     gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
                     osc.connect(gain); gain.connect(this.ctx.destination);
@@ -285,27 +330,11 @@
             },
             playUI() { this.play('sine', 800, 0.1, 0.1); },
             playSelect() { this.play('sine', 1200, 0.05, 0.1); },
-            playMove() {
-                this.play('triangle', 300, 0.1, 0.1);
-                setTimeout(()=>this.play('triangle', 200, 0.1, 0.1), 50);
-            },
-            playCapture() {
-                this.play('sawtooth', 150, 0.3, 0.2);
-                this.play('square', 100, 0.3, 0.2);
-            },
-            playCheck() {
-                this.play('square', 600, 0.2, 0.2);
-                setTimeout(()=>this.play('square', 800, 0.4, 0.2), 100);
-            },
-            playFatality() {
-                this.play('sawtooth', 60, 2.0, 0.5);
-                this.play('square', 40, 2.0, 0.5);
-            },
-            playPromote() {
-                this.play('sine', 400, 0.1, 0.1);
-                setTimeout(()=>this.play('sine', 600, 0.1, 0.1), 100);
-                setTimeout(()=>this.play('sine', 800, 0.3, 0.1), 200);
-            }
+            playMove() { this.play('triangle', 300, 0.1, 0.1); setTimeout(()=>this.play('triangle', 200, 0.1, 0.1), 50); },
+            playCapture() { this.play('sawtooth', 150, 0.3, 0.2); this.play('square', 100, 0.3, 0.2); },
+            playCheck() { this.play('square', 600, 0.2, 0.2); setTimeout(()=>this.play('square', 800, 0.4, 0.2), 100); },
+            playFatality() { this.play('sawtooth', 60, 2.0, 0.5); this.play('square', 40, 2.0, 0.5); },
+            playPromote() { this.play('sine', 400, 0.1, 0.1); setTimeout(()=>this.play('sine', 600, 0.1, 0.1), 100); setTimeout(()=>this.play('sine', 800, 0.3, 0.1), 200); }
         };
 
         window.addEventListener('click', () => AudioSys.init(), {once: true});
@@ -313,16 +342,12 @@
 
         // --- GLOBAL STATE ---
         const State = {
-            turn: 'w', playerColor: 'w',
-            gameState: 'MENU',
+            turn: 'w', playerColor: 'w', gameState: 'MENU',
             selectedSquare: null, validMoves: [],
             camera: { x: 0, y: 0, shakeX: 0, shakeY: 0, shakeIntensity: 0 },
-            invertColors: false,
-            particles: [], visualPieces: [],
-            activeTheme: 'cyberpunk',
-            isCheck: false,
-            history: [], historyIndex: -1,
-            // Statistik
+            invertColors: false, particles: [], visualPieces: [],
+            activeTheme: 'cyberpunk', isCheck: false,
+            history: [], historyIndex: -1, currentEval: 0,
             stats: { turns: 0, kills: 0, checks: 0, fatalities: 0 }
         };
 
@@ -353,16 +378,41 @@
                 document.getElementById('stat-fatalities').innerText = State.stats.fatalities;
                 document.getElementById('mini-turns').innerText = State.stats.turns;
                 document.getElementById('mini-kills').innerText = State.stats.kills;
+            },
+            updateEvalBar(score) {
+                // Score is relative to white. + is white advantage, - is black advantage.
+                const fill = document.getElementById('eval-fill');
+                const textW = document.getElementById('eval-text-w');
+                const textB = document.getElementById('eval-text-b');
+                
+                // Clamp and convert to percentage (Range roughly -1000 to +1000 centipawns)
+                let evalCp = score / 100;
+                let winPercent = 50 + (evalCp * 5); // 1 pawn = 5% shift
+                winPercent = Math.max(5, Math.min(95, winPercent)); // Clamp between 5% and 95% unless mate
+                
+                if (score > 10000) { winPercent = 100; evalCp = "M"; } // White Mate
+                if (score < -10000) { winPercent = 0; evalCp = "-M"; } // Black Mate
+
+                // If player is black, visual bar might invert if we want, but standard is white always at bottom
+                fill.style.height = `${winPercent}%`;
+                
+                let displayTxt = (evalCp > 0 && evalCp !== "M") ? `+${evalCp.toFixed(1)}` : (evalCp !== "-M" && evalCp !== "M" ? evalCp.toFixed(1) : evalCp);
+                if (score >= 0) {
+                    textW.innerText = displayTxt; textB.innerText = "";
+                } else {
+                    textB.innerText = displayTxt; textW.innerText = "";
+                }
             }
         };
 
-        // --- LOGIKA CATUR LEGAL (ALL FIDE RULES) ---
+        // --- 1. CHESS ENGINE (Fast Core Logic) ---
         class ChessEngine {
             constructor() {
                 this.board = Array(8).fill(null).map(() => Array(8).fill(null));
                 this.castling = { w: {k:true, q:true}, b: {k:true, q:true} };
-                this.epSquare = null; // Target En Passant (kotak kosong yg dilompati)
-                this.halfMoves = 0; // Untuk aturan 50 langkah draw
+                this.epSquare = null; 
+                this.halfMoves = 0; 
+                this.positionCounts = {}; // Untuk Threefold Repetition
             }
 
             cloneState() {
@@ -370,7 +420,8 @@
                     board: this.board.map(row => row.map(p => p ? {...p} : null)),
                     castling: JSON.parse(JSON.stringify(this.castling)),
                     epSquare: this.epSquare ? {...this.epSquare} : null,
-                    halfMoves: this.halfMoves
+                    halfMoves: this.halfMoves,
+                    positionCounts: {...this.positionCounts}
                 };
             }
 
@@ -379,6 +430,7 @@
                 this.castling = JSON.parse(JSON.stringify(state.castling));
                 this.epSquare = state.epSquare ? {...state.epSquare} : null;
                 this.halfMoves = state.halfMoves;
+                this.positionCounts = {...state.positionCounts};
             }
 
             setupBoard() {
@@ -391,108 +443,104 @@
                     this.board[7][i] = { color: 'w', type: order[i] };
                 }
                 this.castling = { w: {k:true, q:true}, b: {k:true, q:true} };
-                this.epSquare = null;
-                this.halfMoves = 0;
+                this.epSquare = null; this.halfMoves = 0;
+                this.positionCounts = {};
+                this.recordPosition();
             }
 
-            getPiece(x, y) {
-                if (x < 0 || x > 7 || y < 0 || y > 7) return null;
-                return this.board[y][x];
+            // String hash simpel untuk mendeteksi Threefold Repetition
+            getPosKey() {
+                let key = "";
+                for(let y=0; y<8; y++) {
+                    for(let x=0; x<8; x++) {
+                        const p = this.board[y][x];
+                        key += p ? p.color + p.type : "-";
+                    }
+                }
+                key += `|${this.castling.w.k}${this.castling.w.q}${this.castling.b.k}${this.castling.b.q}`;
+                key += `|${this.epSquare ? this.epSquare.x + ',' + this.epSquare.y : '-'}`;
+                return key;
             }
 
-            getPseudoMoves(x, y, boardState = this.board) {
-                const piece = boardState[y][x];
+            recordPosition() {
+                const key = this.getPosKey();
+                this.positionCounts[key] = (this.positionCounts[key] || 0) + 1;
+            }
+            
+            removePositionRecord(key) {
+                if (this.positionCounts[key]) this.positionCounts[key]--;
+            }
+
+            isThreefoldRepetition() {
+                return Object.values(this.positionCounts).some(v => v >= 3);
+            }
+
+            getPiece(x, y) { return (x >= 0 && x <= 7 && y >= 0 && y <= 7) ? this.board[y][x] : null; }
+
+            getPseudoMoves(x, y, colorOverwrite = null) {
+                const piece = this.board[y][x];
                 if (!piece) return [];
                 const moves = [];
-                const color = piece.color;
+                const color = colorOverwrite || piece.color;
                 const oppColor = color === 'w' ? 'b' : 'w';
                 const dir = color === 'w' ? -1 : 1;
 
                 const addIfValid = (nx, ny, canCapture = true, mustCapture = false) => {
                     if (nx < 0 || nx > 7 || ny < 0 || ny > 7) return false;
-                    const target = boardState[ny][nx];
+                    const target = this.board[ny][nx];
                     if (target) {
-                        if (target.color !== color && canCapture) moves.push({ x: nx, y: ny, target });
+                        if (target.color !== color && canCapture) moves.push({ from: {x,y}, to: {x: nx, y: ny, target} });
                         return false;
                     } else if (!mustCapture) {
-                        moves.push({ x: nx, y: ny, target: null });
+                        moves.push({ from: {x,y}, to: {x: nx, y: ny, target: null} });
                         return true;
                     }
                     return false;
                 };
-
-                const slide = (dx, dy) => {
-                    let nx = x + dx, ny = y + dy;
-                    while (addIfValid(nx, ny)) { nx += dx; ny += dy; }
-                };
+                const slide = (dx, dy) => { let nx = x + dx, ny = y + dy; while (addIfValid(nx, ny)) { nx += dx; ny += dy; } };
 
                 switch (piece.type) {
                     case 'p':
-                        if (addIfValid(x, y + dir, false, false)) { // Maju 1
-                            if ((color === 'w' && y === 6) || (color === 'b' && y === 1)) {
-                                addIfValid(x, y + dir * 2, false, false); // Maju 2
-                            }
+                        if (addIfValid(x, y + dir, false, false)) {
+                            if ((color === 'w' && y === 6) || (color === 'b' && y === 1)) addIfValid(x, y + dir * 2, false, false);
                         }
-                        // Makan normal
                         addIfValid(x - 1, y + dir, true, true);
                         addIfValid(x + 1, y + dir, true, true);
-                        // En Passant
-                        if (this.epSquare && this.epSquare.y === y + dir) {
-                            if (this.epSquare.x === x - 1 || this.epSquare.x === x + 1) {
-                                moves.push({x: this.epSquare.x, y: this.epSquare.y, target: {type:'p', color:oppColor}, isEP: true});
-                            }
+                        if (this.epSquare && this.epSquare.y === y + dir && Math.abs(this.epSquare.x - x) === 1) {
+                            moves.push({ from: {x,y}, to: {x: this.epSquare.x, y: this.epSquare.y, target: {type:'p', color:oppColor}, isEP: true} });
                         }
                         break;
-                    case 'n':
-                        [[-1,-2],[1,-2],[-2,-1],[2,-1],[-1,2],[1,2],[-2,1],[2,1]].forEach(([dx, dy]) => addIfValid(x+dx, y+dy));
-                        break;
-                    case 'b':
-                        [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(([dx, dy]) => slide(dx, dy));
-                        break;
-                    case 'r':
-                        [[0,-1],[0,1],[-1,0],[1,0]].forEach(([dx, dy]) => slide(dx, dy));
-                        break;
-                    case 'q':
-                        [[-1,-1],[1,-1],[-1,1],[1,1],[0,-1],[0,1],[-1,0],[1,0]].forEach(([dx, dy]) => slide(dx, dy));
-                        break;
+                    case 'n': [[-1,-2],[1,-2],[-2,-1],[2,-1],[-1,2],[1,2],[-2,1],[2,1]].forEach(([dx, dy]) => addIfValid(x+dx, y+dy)); break;
+                    case 'b': [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(([dx, dy]) => slide(dx, dy)); break;
+                    case 'r': [[0,-1],[0,1],[-1,0],[1,0]].forEach(([dx, dy]) => slide(dx, dy)); break;
+                    case 'q': [[-1,-1],[1,-1],[-1,1],[1,1],[0,-1],[0,1],[-1,0],[1,0]].forEach(([dx, dy]) => slide(dx, dy)); break;
                     case 'k':
                         [[-1,-1],[1,-1],[-1,1],[1,1],[0,-1],[0,1],[-1,0],[1,0]].forEach(([dx, dy]) => addIfValid(x+dx, y+dy));
-                        
-                        // Castling Logic
-                        if (this.castling[color].k) {
-                            if (!boardState[y][5] && !boardState[y][6] &&
-                                !this.isSquareAttacked(4, y, oppColor, boardState) &&
-                                !this.isSquareAttacked(5, y, oppColor, boardState) &&
-                                !this.isSquareAttacked(6, y, oppColor, boardState)) {
-                                moves.push({x: 6, y: y, target: null, isCastle: true});
-                            }
+                        if (this.castling[color].k && !this.board[y][5] && !this.board[y][6] && !this.isSquareAttacked(4, y, oppColor) && !this.isSquareAttacked(5, y, oppColor) && !this.isSquareAttacked(6, y, oppColor)) {
+                            moves.push({ from:{x,y}, to:{x: 6, y: y, target: null, isCastle: true} });
                         }
-                        if (this.castling[color].q) {
-                            if (!boardState[y][1] && !boardState[y][2] && !boardState[y][3] &&
-                                !this.isSquareAttacked(4, y, oppColor, boardState) &&
-                                !this.isSquareAttacked(3, y, oppColor, boardState) &&
-                                !this.isSquareAttacked(2, y, oppColor, boardState)) {
-                                moves.push({x: 2, y: y, target: null, isCastle: true});
-                            }
+                        if (this.castling[color].q && !this.board[y][1] && !this.board[y][2] && !this.board[y][3] && !this.isSquareAttacked(4, y, oppColor) && !this.isSquareAttacked(3, y, oppColor) && !this.isSquareAttacked(2, y, oppColor)) {
+                            moves.push({ from:{x,y}, to:{x: 2, y: y, target: null, isCastle: true} });
                         }
                         break;
                 }
                 return moves;
             }
 
-            isSquareAttacked(targetX, targetY, attackerColor, boardState = this.board) {
+            isSquareAttacked(targetX, targetY, attackerColor) {
                 for (let y = 0; y < 8; y++) {
                     for (let x = 0; x < 8; x++) {
-                        const piece = boardState[y][x];
+                        const piece = this.board[y][x];
                         if (piece && piece.color === attackerColor) {
                             if (piece.type === 'p') {
                                 const dir = attackerColor === 'w' ? -1 : 1;
-                                if ((targetY === y + dir) && (targetX === x - 1 || targetX === x + 1)) return true;
+                                if ((targetY === y + dir) && Math.abs(targetX - x) === 1) return true;
                             } else if (piece.type === 'k') {
                                 if (Math.abs(targetX - x) <= 1 && Math.abs(targetY - y) <= 1) return true;
                             } else {
-                                const moves = this.getPseudoMoves(x, y, boardState);
-                                if (moves.some(m => m.x === targetX && m.y === targetY)) return true;
+                                // Basic pseudo-moves without infinite recursion
+                                const moves = this.getPseudoMoves(x, y);
+                                if (moves.some(m => m.to.x === targetX && m.to.y === targetY)) return true;
                             }
                         }
                     }
@@ -500,77 +548,45 @@
                 return false;
             }
 
-            isInCheck(color, boardState = this.board) {
-                let kx = -1, ky = -1;
+            isInCheck(color) {
                 for (let y = 0; y < 8; y++) {
                     for (let x = 0; x < 8; x++) {
-                        const p = boardState[y][x];
-                        if (p && p.type === 'k' && p.color === color) { kx = x; ky = y; break; }
-                    }
-                }
-                if (kx === -1) return false;
-                return this.isSquareAttacked(kx, ky, color === 'w' ? 'b' : 'w', boardState);
-            }
-
-            getLegalMoves(x, y) {
-                const piece = this.getPiece(x, y);
-                if (!piece) return [];
-                const pseudoMoves = this.getPseudoMoves(x, y);
-                const legalMoves = [];
-                const savedState = this.cloneState(); // Deep copy state untuk simulasi aman
-
-                for (let move of pseudoMoves) {
-                    this.movePieceLogic(x, y, move.x, move.y, move);
-                    if (!this.isInCheck(piece.color)) legalMoves.push(move);
-                    this.restoreState(savedState);
-                }
-                return legalMoves;
-            }
-
-            getAllLegalMoves(color) {
-                let moves = [];
-                for (let y = 0; y < 8; y++) {
-                    for (let x = 0; x < 8; x++) {
-                        const p = this.getPiece(x, y);
-                        if (p && p.color === color) {
-                            const pMoves = this.getLegalMoves(x, y);
-                            pMoves.forEach(m => moves.push({from: {x,y}, to: m}));
+                        const p = this.board[y][x];
+                        if (p && p.type === 'k' && p.color === color) {
+                            return this.isSquareAttacked(x, y, color === 'w' ? 'b' : 'w');
                         }
                     }
                 }
-                return moves;
+                return false;
             }
 
-            // Fungsi inti mutasi logika (Tanpa visual)
-            movePieceLogic(fromX, fromY, toX, toY, moveObj) {
+            // O(1) Fast Move Generation (In-place memory manipulation) required for Alpha-Beta
+            makeMoveFast(move) {
+                const fromX = move.from.x, fromY = move.from.y;
+                const toX = move.to.x, toY = move.to.y;
                 const piece = this.board[fromY][fromX];
                 const target = this.board[toY][toX];
                 
-                // 50 Move rule counter
-                if (piece.type === 'p' || target) this.halfMoves = 0;
-                else this.halfMoves++;
+                const revertData = {
+                    pieceMoved: piece.type, target: target, epSquare: this.epSquare,
+                    castling: JSON.parse(JSON.stringify(this.castling)), halfMoves: this.halfMoves,
+                    isPromoted: false, isEP: move.to.isEP, isCastle: move.to.isCastle,
+                    prevPosKey: this.getPosKey()
+                };
 
-                // Eksekusi En Passant
-                if (moveObj && moveObj.isEP) {
-                    this.board[fromY][toX] = null; // Hapus pion yg dilompati
+                this.halfMoves = (piece.type === 'p' || target) ? 0 : this.halfMoves + 1;
+                this.epSquare = null;
+
+                if (move.to.isEP) this.board[fromY][toX] = null; // Kill EP pawn
+                
+                if (move.to.isCastle) {
+                    if (toX > fromX) { this.board[fromY][5] = this.board[fromY][7]; this.board[fromY][7] = null; } // K-side
+                    else { this.board[fromY][3] = this.board[fromY][0]; this.board[fromY][0] = null; } // Q-side
                 }
 
-                // Eksekusi Castling (Pindah Benteng otomatis)
-                if (piece.type === 'k' && Math.abs(toX - fromX) === 2) {
-                    if (toX > fromX) { // Kingside
-                        this.board[fromY][5] = this.board[fromY][7];
-                        this.board[fromY][7] = null;
-                    } else { // Queenside
-                        this.board[fromY][3] = this.board[fromY][0];
-                        this.board[fromY][0] = null;
-                    }
-                }
-
-                // Pindah posisi utama
                 this.board[toY][toX] = piece;
                 this.board[fromY][fromX] = null;
 
-                // Update Hak Castling
                 if (piece.type === 'k') { this.castling[piece.color].k = false; this.castling[piece.color].q = false; }
                 if (piece.type === 'r') {
                     if (fromX === 0) this.castling[piece.color].q = false;
@@ -581,23 +597,230 @@
                     if (toX === 7) this.castling[target.color].k = false;
                 }
 
-                // Update En Passant Target
-                this.epSquare = null;
-                if (piece.type === 'p' && Math.abs(toY - fromY) === 2) {
-                    this.epSquare = { x: fromX, y: (fromY + toY) / 2 };
+                if (piece.type === 'p' && Math.abs(toY - fromY) === 2) this.epSquare = { x: fromX, y: (fromY + toY) / 2 };
+                if (piece.type === 'p' && (toY === 0 || toY === 7)) {
+                    piece.type = 'q'; revertData.isPromoted = true;
                 }
 
-                // Auto Promosi
-                if (piece.type === 'p' && (toY === 0 || toY === 7)) {
-                    piece.type = 'q';
-                    piece.isPromoted = true; // Flag untuk efek visual
+                // Jangan catat history di engine search tree untuk hemat performa, cukup hash sementara
+                return revertData;
+            }
+
+            unmakeMoveFast(move, revertData) {
+                const fromX = move.from.x, fromY = move.from.y;
+                const toX = move.to.x, toY = move.to.y;
+                const piece = this.board[toY][toX];
+
+                if (revertData.isPromoted) piece.type = 'p';
+
+                this.board[fromY][fromX] = piece;
+                this.board[toY][toX] = revertData.target;
+
+                if (revertData.isEP) {
+                    this.board[toY][toX] = null;
+                    this.board[fromY][toX] = { type: 'p', color: piece.color === 'w' ? 'b' : 'w' };
                 }
+
+                if (revertData.isCastle) {
+                    if (toX > fromX) { this.board[fromY][7] = this.board[fromY][5]; this.board[fromY][5] = null; }
+                    else { this.board[fromY][0] = this.board[fromY][3]; this.board[fromY][3] = null; }
+                }
+
+                this.epSquare = revertData.epSquare;
+                this.castling = revertData.castling;
+                this.halfMoves = revertData.halfMoves;
+            }
+
+            getAllLegalMoves(color) {
+                let moves = [];
+                for (let y = 0; y < 8; y++) {
+                    for (let x = 0; x < 8; x++) {
+                        const p = this.board[y][x];
+                        if (p && p.color === color) {
+                            const pseudoMoves = this.getPseudoMoves(x, y);
+                            for (let m of pseudoMoves) {
+                                const rev = this.makeMoveFast(m);
+                                if (!this.isInCheck(color)) moves.push(m);
+                                this.unmakeMoveFast(m, rev);
+                            }
+                        }
+                    }
+                }
+                return moves;
             }
         }
 
         const Engine = new ChessEngine();
 
-        // --- RENDERER VISUAL ---
+        // --- 2. AI ENGINE (Minimax + Alpha-Beta + PST) Target Elo 1500 ---
+        const SigmaAI = {
+            nodesEvaluated: 0,
+            
+            // Piece Square Tables (PST) - Evaluasi posisi per petak (perspektif Putih)
+            PST: {
+                p: [
+                    [0,  0,  0,  0,  0,  0,  0,  0],
+                    [50, 50, 50, 50, 50, 50, 50, 50],
+                    [10, 10, 20, 30, 30, 20, 10, 10],
+                    [5,  5, 10, 25, 25, 10,  5,  5],
+                    [0,  0,  0, 20, 20,  0,  0,  0],
+                    [5, -5,-10,  0,  0,-10, -5,  5],
+                    [5, 10, 10,-20,-20, 10, 10,  5],
+                    [0,  0,  0,  0,  0,  0,  0,  0]
+                ],
+                n: [
+                    [-50,-40,-30,-30,-30,-30,-40,-50],
+                    [-40,-20,  0,  0,  0,  0,-20,-40],
+                    [-30,  0, 10, 15, 15, 10,  0,-30],
+                    [-30,  5, 15, 20, 20, 15,  5,-30],
+                    [-30,  0, 15, 20, 20, 15,  0,-30],
+                    [-30,  5, 10, 15, 15, 10,  5,-30],
+                    [-40,-20,  0,  5,  5,  0,-20,-40],
+                    [-50,-40,-30,-30,-30,-30,-40,-50]
+                ],
+                b: [
+                    [-20,-10,-10,-10,-10,-10,-10,-20],
+                    [-10,  0,  0,  0,  0,  0,  0,-10],
+                    [-10,  0,  5, 10, 10,  5,  0,-10],
+                    [-10,  5,  5, 10, 10,  5,  5,-10],
+                    [-10,  0, 10, 10, 10, 10,  0,-10],
+                    [-10, 10, 10, 10, 10, 10, 10,-10],
+                    [-10,  5,  0,  0,  0,  0,  5,-10],
+                    [-20,-10,-10,-10,-10,-10,-10,-20]
+                ],
+                r: [
+                    [ 0,  0,  0,  0,  0,  0,  0,  0],
+                    [ 5, 10, 10, 10, 10, 10, 10,  5],
+                    [-5,  0,  0,  0,  0,  0,  0, -5],
+                    [-5,  0,  0,  0,  0,  0,  0, -5],
+                    [-5,  0,  0,  0,  0,  0,  0, -5],
+                    [-5,  0,  0,  0,  0,  0,  0, -5],
+                    [-5,  0,  0,  0,  0,  0,  0, -5],
+                    [ 0,  0,  0,  5,  5,  0,  0,  0]
+                ],
+                q: [
+                    [-20,-10,-10, -5, -5,-10,-10,-20],
+                    [-10,  0,  0,  0,  0,  0,  0,-10],
+                    [-10,  0,  5,  5,  5,  5,  0,-10],
+                    [ -5,  0,  5,  5,  5,  5,  0, -5],
+                    [  0,  0,  5,  5,  5,  5,  0, -5],
+                    [-10,  5,  5,  5,  5,  5,  0,-10],
+                    [-10,  0,  5,  0,  0,  0,  0,-10],
+                    [-20,-10,-10, -5, -5,-10,-10,-20]
+                ],
+                k: [
+                    [-30,-40,-40,-50,-50,-40,-40,-30],
+                    [-30,-40,-40,-50,-50,-40,-40,-30],
+                    [-30,-40,-40,-50,-50,-40,-40,-30],
+                    [-30,-40,-40,-50,-50,-40,-40,-30],
+                    [-20,-30,-30,-40,-40,-30,-30,-20],
+                    [-10,-20,-20,-20,-20,-20,-20,-10],
+                    [ 20, 20,  0,  0,  0,  0, 20, 20],
+                    [ 20, 30, 10,  0,  0, 10, 30, 20]
+                ]
+            },
+
+            evaluatePosition(engine) {
+                let score = 0;
+                for (let y = 0; y < 8; y++) {
+                    for (let x = 0; x < 8; x++) {
+                        const p = engine.board[y][x];
+                        if (p) {
+                            let pstVal = 0;
+                            // PST is from white perspective. Flip Y for black.
+                            if (p.color === 'w') pstVal = this.PST[p.type][y][x];
+                            else pstVal = this.PST[p.type][7-y][x];
+                            
+                            let val = PIECE_VALUES[p.type] + pstVal;
+                            score += p.color === 'w' ? val : -val;
+                        }
+                    }
+                }
+                return score;
+            },
+
+            minimax(engine, depth, alpha, beta, isMaximizing, color) {
+                this.nodesEvaluated++;
+                if (depth === 0) return this.evaluatePosition(engine);
+
+                const moves = engine.getAllLegalMoves(isMaximizing ? color : (color==='w'?'b':'w'));
+                
+                if (moves.length === 0) {
+                    if (engine.isInCheck(isMaximizing ? color : (color==='w'?'b':'w'))) {
+                        return isMaximizing ? -99999 + (10-depth) : 99999 - (10-depth); // Checkmate. Prefer faster mate.
+                    }
+                    return 0; // Stalemate
+                }
+
+                // Move Ordering (Heuristik) untuk Alpha-Beta agar pruning maksimal: Prioritaskan makan bidak!
+                moves.sort((a,b) => {
+                    let scoreA = a.to.target ? PIECE_VALUES[a.to.target.type] : 0;
+                    if (a.to.isPromoted) scoreA += 900;
+                    let scoreB = b.to.target ? PIECE_VALUES[b.to.target.type] : 0;
+                    if (b.to.isPromoted) scoreB += 900;
+                    return scoreB - scoreA;
+                });
+
+                if (isMaximizing) {
+                    let maxEval = -Infinity;
+                    for (let move of moves) {
+                        const rev = engine.makeMoveFast(move);
+                        const ev = this.minimax(engine, depth - 1, alpha, beta, false, color);
+                        engine.unmakeMoveFast(move, rev);
+                        maxEval = Math.max(maxEval, ev);
+                        alpha = Math.max(alpha, ev);
+                        if (beta <= alpha) break;
+                    }
+                    return maxEval;
+                } else {
+                    let minEval = Infinity;
+                    for (let move of moves) {
+                        const rev = engine.makeMoveFast(move);
+                        const ev = this.minimax(engine, depth - 1, alpha, beta, true, color);
+                        engine.unmakeMoveFast(move, rev);
+                        minEval = Math.min(minEval, ev);
+                        beta = Math.min(beta, ev);
+                        if (beta <= alpha) break;
+                    }
+                    return minEval;
+                }
+            },
+
+            getBestMove(engine, depth, color) {
+                this.nodesEvaluated = 0;
+                let bestMove = null;
+                let bestValue = color === 'w' ? -Infinity : Infinity;
+                let alpha = -Infinity;
+                let beta = Infinity;
+
+                const moves = engine.getAllLegalMoves(color);
+                
+                // Shuffle for random flavor among equal best moves
+                moves.sort(() => Math.random() - 0.5);
+                moves.sort((a,b) => (b.to.target ? 1000 : 0) - (a.to.target ? 1000 : 0));
+
+                for (let move of moves) {
+                    const rev = engine.makeMoveFast(move);
+                    const boardVal = this.minimax(engine, depth - 1, alpha, beta, false, color);
+                    engine.unmakeMoveFast(move, rev);
+
+                    if (color === 'w') {
+                        if (boardVal > bestValue) { bestValue = boardVal; bestMove = move; }
+                        alpha = Math.max(alpha, boardVal);
+                    } else {
+                        if (boardVal < bestValue) { bestValue = boardVal; bestMove = move; }
+                        beta = Math.min(beta, boardVal);
+                    }
+                }
+                
+                State.currentEval = bestValue;
+                MenuSystem.updateEvalBar(bestValue); // Update bar with pure engine evaluation
+                
+                return bestMove;
+            }
+        };
+
+        // --- 3. RENDERER VISUAL & UI ---
         class VisualPiece {
             constructor(x, y, logicalPiece) {
                 this.logicalX = x; this.logicalY = y;
@@ -688,12 +911,12 @@
                 this.canvas.width = window.innerWidth * dpr; this.canvas.height = window.innerHeight * dpr;
                 this.ctx.scale(dpr, dpr);
                 const minDim = Math.min(window.innerWidth, window.innerHeight);
-                // Responsivitas Papan Catur untuk Mobile vs Desktop
-                this.cellSize = Math.floor((minDim * 0.95) / 8); 
-                if (window.innerWidth > 640) this.cellSize = Math.floor((minDim * 0.8) / 8);
+                this.cellSize = Math.floor((minDim * 0.90) / 8); 
+                if (window.innerWidth > 640) this.cellSize = Math.floor((minDim * 0.75) / 8); // Extra room for eval bar
 
                 this.offsetX = (window.innerWidth - (this.cellSize * 8)) / 2;
-                // Geser Y jika portrait (mobile) agar HUD atas tidak menutupi
+                if (window.innerWidth > 640) this.offsetX += 20; // Shift right to avoid eval bar on desktop
+
                 this.offsetY = window.innerHeight > window.innerWidth ? (window.innerHeight - this.cellSize*8)/2 + 40 : (window.innerHeight - this.cellSize*8)/2 + 20;
             },
 
@@ -711,22 +934,21 @@
                 this.triggerScreenShake(isFatality ? 30 : 15);
             },
 
-            async executeMoveAnimation(visualPiece, toX, toY, moveObj) {
+            async executeMoveAnimation(visualPiece, moveObj) {
                 State.gameState = 'ANIMATING';
-                const isFatalityCheck = moveObj.target && moveObj.target.type === 'k'; // Logika Cinematic
+                const toX = moveObj.to.x; const toY = moveObj.to.y;
+                const isFatalityCheck = moveObj.to.target && moveObj.to.target.type === 'k';
 
-                // Cek Castling Animation
                 let rookVisual = null; let rookToX = 0;
-                if (moveObj.isCastle) {
+                if (moveObj.to.isCastle) {
                     const rookX = toX > visualPiece.logicalX ? 7 : 0;
                     rookToX = toX > visualPiece.logicalX ? 5 : 3;
                     rookVisual = State.visualPieces.find(vp => vp.logicalX === rookX && vp.logicalY === visualPiece.logicalY);
                 }
 
-                // Cari target visual (bisa beda kordinat jika En Passant)
                 let targetVisual = State.visualPieces.find(vp => vp.logicalX === toX && vp.logicalY === toY);
                 let explodeY = toY;
-                if (moveObj.isEP) {
+                if (moveObj.to.isEP) {
                     targetVisual = State.visualPieces.find(vp => vp.logicalX === toX && vp.logicalY === visualPiece.logicalY);
                     explodeY = visualPiece.logicalY;
                 }
@@ -773,12 +995,12 @@
                     await new Promise(r => setTimeout(r, 150));
                 }
 
-                if (rookVisual) rookVisual.logicalX = rookToX; // Rokade Visual Update
+                if (rookVisual) rookVisual.logicalX = rookToX;
 
-                // Panggil Engine Inti
-                Engine.movePieceLogic(visualPiece.piece.logicalX_old, visualPiece.piece.logicalY_old, toX, toY, moveObj);
+                // Sync Full Logic Engine State
+                Engine.makeMoveFast(moveObj);
+                Engine.recordPosition();
                 
-                // Efek Promosi
                 if (visualPiece.piece.type === 'p' && (toY === 0 || toY === 7)) {
                     AudioSys.playPromote();
                     this.createExplosion(toX, toY, '#ffff00', "PROMOTION!");
@@ -789,7 +1011,7 @@
             }
         };
 
-        // --- GAME CORE LOGIC ---
+        // --- 4. GAME CONTROLLER ---
         const GameCore = {
             initGame(colorChoice) {
                 AudioSys.playUI(); MenuSystem.hideAll(); document.getElementById('game-hud').classList.remove('hidden-layer');
@@ -806,7 +1028,14 @@
                 document.getElementById('enemy-icon').innerText = State.playerColor === 'w' ? '♟' : '♙';
                 document.getElementById('enemy-icon').style.borderColor = eColorHex; document.getElementById('enemy-icon').style.color = eColorHex;
 
-                Engine.setupBoard(); this.syncVisualPieces(); this.updateHUD(); this.saveState();
+                Engine.setupBoard(); 
+                this.syncVisualPieces(); 
+                this.updateHUD(); 
+                this.saveState();
+                
+                // Initial Eval
+                const initialEval = SigmaAI.evaluatePosition(Engine);
+                MenuSystem.updateEvalBar(initialEval);
 
                 if (State.playerColor === 'b') setTimeout(() => this.processAITurn(), 800);
             },
@@ -816,7 +1045,7 @@
                 State.history.push({
                     logicState: Engine.cloneState(),
                     turn: State.turn, isCheck: State.isCheck,
-                    stats: {...State.stats}
+                    stats: {...State.stats}, evalVal: State.currentEval
                 });
                 State.historyIndex = State.history.length - 1;
                 this.updateUndoRedoUI();
@@ -827,8 +1056,10 @@
                 State.turn = historyState.turn; State.isCheck = historyState.isCheck;
                 State.stats = {...historyState.stats};
                 State.gameState = 'IDLE'; State.selectedSquare = null; State.validMoves = [];
+                State.currentEval = historyState.evalVal || 0;
                 this.syncVisualPieces(); this.updateHUD(); this.updateUndoRedoUI();
                 MenuSystem.updateStatsUI();
+                MenuSystem.updateEvalBar(State.currentEval);
             },
 
             undo() {
@@ -888,22 +1119,25 @@
                 MenuSystem.updateStatsUI();
 
                 const allLegalMoves = Engine.getAllLegalMoves(State.turn);
+                const isThreefold = Engine.isThreefoldRepetition();
                 
-                // Cek Skakmat / Stalemate / Draw 50 Langkah
-                if (allLegalMoves.length === 0 || Engine.halfMoves >= 100) {
+                if (allLegalMoves.length === 0 || Engine.halfMoves >= 100 || isThreefold) {
                     State.gameState = 'GAME_OVER';
                     this.saveState(); 
-                    this.triggerGameOver(State.isCheck, allLegalMoves.length > 0);
+                    this.triggerGameOver(State.isCheck, Engine.halfMoves >= 100 || isThreefold, isThreefold);
                     return;
                 }
 
                 State.gameState = 'IDLE';
                 this.updateHUD(); this.saveState();
 
-                if (State.turn !== State.playerColor) setTimeout(() => this.processAITurn(), 600);
+                if (State.turn !== State.playerColor) {
+                    // Small delay to simulate "thinking" visually
+                    setTimeout(() => this.processAITurn(), 100);
+                }
             },
 
-            triggerGameOver(isCheckmate, isDrawRule) {
+            triggerGameOver(isCheckmate, isDrawRule, isThreefold) {
                 const isPlayerWin = State.turn !== State.playerColor; 
                 setTimeout(() => {
                     document.getElementById('game-over-screen').classList.remove('hidden-layer');
@@ -912,8 +1146,8 @@
                         document.getElementById('winner-text').innerText = isPlayerWin ? ">> PLAYER WINS <<" : ">> NEMESIS WINS <<";
                         document.getElementById('winner-text').style.color = isPlayerWin ? "#00ffff" : "#ff0000";
                     } else {
-                        document.getElementById('fatality-title').innerText = isDrawRule ? "DRAW RULE" : "STALEMATE";
-                        document.getElementById('winner-text').innerText = "SERI";
+                        document.getElementById('fatality-title').innerText = isThreefold ? "REPETITION" : (isDrawRule ? "50-MOVE RULE" : "STALEMATE");
+                        document.getElementById('winner-text').innerText = "DRAW / SERI";
                         document.getElementById('winner-text').style.color = "#aaaaaa";
                     }
                 }, 1000); 
@@ -937,35 +1171,23 @@
 
             processAITurn() {
                 if (State.gameState !== 'IDLE') return;
-                let allMoves = Engine.getAllLegalMoves(State.turn);
-                if (allMoves.length === 0) return;
-
-                let bestMove = null; let maxScore = -Infinity;
-                allMoves.forEach(m => {
-                    let score = MathUtils.random(0, 10); 
-                    if (m.to.target) score += PIECE_VALUES[m.to.target.type] * 10;
-                    if (m.to.isPromoted) score += 900; // Prioritas promosi
-                    
-                    const savedState = Engine.cloneState();
-                    Engine.movePieceLogic(m.from.x, m.from.y, m.to.x, m.to.y, m.to);
-                    if (Engine.isSquareAttacked(m.to.x, m.to.y, State.playerColor)) {
-                        const pieceVal = PIECE_VALUES[Engine.board[m.to.y][m.to.x].type];
-                        score -= pieceVal; // Jangan buang bidak mahal sia-sia
+                
+                // Depth 3 is sufficient for ~1500 Elo in JS without Workers (Responsive enough)
+                const depth = 3; 
+                
+                // Offload to slightly prevent complete UI freeze (though heavy search will freeze JS briefly)
+                setTimeout(() => {
+                    const bestMove = SigmaAI.getBestMove(Engine, depth, State.turn);
+                    if (bestMove) {
+                        const visualPiece = State.visualPieces.find(vp => vp.logicalX === bestMove.from.x && vp.logicalY === bestMove.from.y);
+                        visualPiece.piece.logicalX_old = bestMove.from.x; visualPiece.piece.logicalY_old = bestMove.from.y;
+                        Renderer.executeMoveAnimation(visualPiece, bestMove);
                     }
-                    Engine.restoreState(savedState);
-
-                    if (score > maxScore) { maxScore = score; bestMove = m; }
-                });
-
-                if (bestMove) {
-                    const visualPiece = State.visualPieces.find(vp => vp.logicalX === bestMove.from.x && vp.logicalY === bestMove.from.y);
-                    visualPiece.piece.logicalX_old = bestMove.from.x; visualPiece.piece.logicalY_old = bestMove.from.y;
-                    Renderer.executeMoveAnimation(visualPiece, bestMove.to.x, bestMove.to.y, bestMove.to);
-                }
+                }, 50);
             }
         };
 
-        // --- INPUT HANDLING ---
+        // --- 5. INPUT HANDLING ---
         function getLogicalPos(e) {
             let cx = e.touches ? e.touches[0].clientX : e.clientX;
             let cy = e.touches ? e.touches[0].clientY : e.clientY;
@@ -987,11 +1209,11 @@
             const {x, y} = getLogicalPos(e);
             if (x < 0 || x > 7 || y < 0 || y > 7) { State.selectedSquare = null; State.validMoves = []; return; }
 
-            const move = State.validMoves.find(m => m.x === x && m.y === y);
+            const move = State.validMoves.find(m => m.to.x === x && m.to.y === y);
             if (move && State.selectedSquare) {
                 const visualPiece = State.visualPieces.find(vp => vp.logicalX === State.selectedSquare.x && vp.logicalY === State.selectedSquare.y);
                 visualPiece.piece.logicalX_old = State.selectedSquare.x; visualPiece.piece.logicalY_old = State.selectedSquare.y;
-                Renderer.executeMoveAnimation(visualPiece, x, y, move);
+                Renderer.executeMoveAnimation(visualPiece, move);
                 return;
             }
 
@@ -1000,7 +1222,7 @@
                 AudioSys.playSelect(); 
                 State.selectedSquare = {x, y};
                 State.validMoves = Engine.getLegalMoves(x, y); 
-                Renderer.triggerScreenShake(3); 
+                Renderer.triggerScreenShake(2); 
             } else {
                 State.selectedSquare = null; State.validMoves = [];
             }
@@ -1038,28 +1260,43 @@
                     let vx = State.playerColor === 'w' ? x : 7 - x;
                     let vy = State.playerColor === 'w' ? y : 7 - y;
                     
-                    ctx.fillRect(Renderer.offsetX + vx * cs, Renderer.offsetY + vy * cs, cs, cs);
+                    const px = Renderer.offsetX + vx * cs;
+                    const py = Renderer.offsetY + vy * cs;
+                    
+                    ctx.fillRect(px, py, cs, cs);
+                    
+                    // Notasi Aljabar (Koordinat a-h, 1-8)
+                    ctx.fillStyle = theme.coordColor;
+                    ctx.font = `bold ${Math.max(10, cs * 0.15)}px Arial`;
+                    ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+                    if (vx === 0) { // Rank (1-8)
+                        ctx.fillText(8 - y, px + 2, py + 2);
+                    }
+                    if (vy === 7) { // File (a-h)
+                        ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
+                        ctx.fillText(String.fromCharCode(97 + x), px + cs - 2, py + cs - 2);
+                    }
                     
                     if (State.selectedSquare && State.selectedSquare.x === x && State.selectedSquare.y === y) {
-                        ctx.fillStyle = theme.highlight; ctx.fillRect(Renderer.offsetX + vx * cs, Renderer.offsetY + vy * cs, cs, cs);
+                        ctx.fillStyle = theme.highlight; ctx.fillRect(px, py, cs, cs);
                     }
                     
                     if (State.isCheck) {
                         const p = Engine.getPiece(x,y);
                         if (p && p.type === 'k' && p.color === State.turn) {
                             ctx.fillStyle = `rgba(255, 0, 0, ${0.4 + Math.sin(Date.now()/100)*0.3})`;
-                            ctx.fillRect(Renderer.offsetX + vx * cs, Renderer.offsetY + vy * cs, cs, cs);
+                            ctx.fillRect(px, py, cs, cs);
                         }
                     }
                 }
             }
 
             State.validMoves.forEach(m => {
-                let vx = State.playerColor === 'w' ? m.x : 7 - m.x;
-                let vy = State.playerColor === 'w' ? m.y : 7 - m.y;
+                let vx = State.playerColor === 'w' ? m.to.x : 7 - m.to.x;
+                let vy = State.playerColor === 'w' ? m.to.y : 7 - m.to.y;
                 const px = Renderer.offsetX + vx * cs; const py = Renderer.offsetY + vy * cs;
                 
-                if (m.target || m.isEP) {
+                if (m.to.target || m.to.isEP) {
                     ctx.fillStyle = `rgba(255, 0, 0, ${0.3 + Math.sin(Date.now() / 150) * 0.2})`;
                     ctx.fillRect(px, py, cs, cs); ctx.strokeStyle = '#ff0000'; ctx.lineWidth = 2; ctx.strokeRect(px, py, cs, cs);
                 } else {
