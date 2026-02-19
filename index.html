@@ -14,6 +14,7 @@
             font-family: 'Courier New', Courier, monospace;
             touch-action: none;
             user-select: none;
+            -webkit-user-select: none;
         }
         #gameCanvas {
             display: block;
@@ -37,6 +38,7 @@
             align-items: center;
             justify-content: center;
             pointer-events: auto;
+            overflow-y: auto;
         }
         .hidden-layer { display: none !important; }
         
@@ -44,10 +46,12 @@
         .neon-text { text-shadow: 0 0 5px var(--theme-glow), 0 0 10px var(--theme-glow-dim); }
         .blood-text { text-shadow: 0 0 10px rgba(255, 0, 0, 0.8), 0 0 20px rgba(255, 0, 0, 0.4); }
         .fatality-text { 
-            font-size: 5rem; font-weight: 900; color: #ff0000;
+            font-size: clamp(3rem, 10vw, 6rem); 
+            font-weight: 900; color: #ff0000;
             text-shadow: 0 0 20px #ff0000, 4px 4px 0px #880000, -4px -4px 0px #330000;
-            letter-spacing: 10px;
+            letter-spacing: clamp(2px, 2vw, 10px);
             animation: shake 0.5s infinite;
+            text-align: center;
         }
         
         @keyframes shake {
@@ -79,15 +83,16 @@
             background: transparent;
             border: 2px solid var(--theme-glow);
             color: var(--theme-text);
-            padding: 15px 40px;
-            font-size: 1.5rem;
+            padding: 12px 24px;
+            font-size: clamp(1rem, 3vw, 1.5rem);
             font-weight: bold;
             text-transform: uppercase;
-            letter-spacing: 3px;
+            letter-spacing: 2px;
             cursor: pointer;
             transition: all 0.3s ease;
             position: relative;
             overflow: hidden;
+            width: 100%;
         }
         .btn-sigma:hover {
             background: var(--theme-glow);
@@ -95,92 +100,134 @@
             box-shadow: 0 0 20px var(--theme-glow);
             transform: scale(1.05);
         }
+        /* Mobile optimisations */
+        @media (max-width: 640px) {
+            .hud-container { flex-direction: column; gap: 0.5rem; align-items: center; }
+            .sigma-panel { padding: 0.5rem 1rem; width: 100%; justify-content: center; }
+            .desktop-only { display: none; }
+        }
     </style>
 </head>
 <body style="--theme-glow: #00ffff; --theme-glow-dim: rgba(0,255,255,0.3); --theme-text: #00ffff;">
 
     <!-- MAIN MENU -->
     <div id="main-menu" class="menu-layer">
-        <h1 class="text-6xl font-black mb-2 tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-600" style="filter: drop-shadow(0 0 10px rgba(0,255,255,0.5))">SIGMA CHESS</h1>
-        <h2 class="text-xl text-red-500 font-bold mb-12 tracking-widest blood-text">FATALITY EDITION</h2>
+        <h1 class="text-4xl sm:text-6xl font-black mb-2 tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-600 text-center" style="filter: drop-shadow(0 0 10px rgba(0,255,255,0.5))">SIGMA CHESS</h1>
+        <h2 class="text-lg sm:text-xl text-red-500 font-bold mb-10 tracking-widest blood-text text-center">FATALITY EDITION</h2>
         
-        <div class="space-y-6 flex flex-col w-64">
+        <div class="space-y-4 flex flex-col w-11/12 max-w-xs">
             <button class="btn-sigma" onclick="MenuSystem.showSideSelection()">PLAY</button>
+            <button class="btn-sigma" onclick="MenuSystem.showStatsMenu()" style="border-color:#ffaa00; color:#ffaa00;">STATISTICS</button>
             <button class="btn-sigma" onclick="MenuSystem.showSettings()" style="border-color:#aaa; color:#aaa;">SETTINGS</button>
         </div>
     </div>
 
     <!-- SIDE SELECTION -->
     <div id="side-menu" class="menu-layer hidden-layer">
-        <h2 class="text-3xl font-bold mb-8 text-white tracking-widest neon-text">CHOOSE FACTION</h2>
-        <div class="flex gap-6">
+        <h2 class="text-2xl sm:text-3xl font-bold mb-8 text-white tracking-widest neon-text text-center">CHOOSE FACTION</h2>
+        <div class="flex flex-col sm:flex-row gap-4 w-11/12 max-w-md">
             <button class="btn-sigma" style="--theme-glow:#fff; --theme-text:#fff" onclick="GameCore.initGame('w')">WHITE</button>
             <button class="btn-sigma" style="--theme-glow:#ff3333; --theme-text:#ff3333" onclick="GameCore.initGame('b')">BLACK</button>
         </div>
-        <button class="mt-8 text-gray-500 hover:text-white transition" onclick="GameCore.initGame('random')">[ RANDOM ]</button>
-        <button class="mt-12 text-sm text-cyan-500 hover:text-cyan-300" onclick="MenuSystem.showMainMenu()"><< BACK</button>
+        <button class="mt-6 text-gray-500 hover:text-white transition tracking-widest font-bold" onclick="GameCore.initGame('random')">[ RANDOM ]</button>
+        <button class="mt-12 text-sm text-cyan-500 hover:text-cyan-300 tracking-widest" onclick="MenuSystem.showMainMenu()"><< BACK</button>
     </div>
 
     <!-- SETTINGS -->
     <div id="settings-menu" class="menu-layer hidden-layer">
-        <h2 class="text-3xl font-bold mb-8 text-white tracking-widest">SYSTEM OVERRIDE</h2>
-        <div class="space-y-4 flex flex-col w-80">
-            <p class="text-sm text-gray-400 text-center">SKIN / THEME</p>
+        <h2 class="text-2xl sm:text-3xl font-bold mb-8 text-white tracking-widest text-center">SYSTEM OVERRIDE</h2>
+        <div class="space-y-4 flex flex-col w-11/12 max-w-xs">
+            <p class="text-sm text-gray-400 text-center tracking-widest">SKIN / THEME</p>
             <button class="btn-sigma" style="--theme-glow:#00ffff; --theme-text:#00ffff" onclick="MenuSystem.setTheme('cyberpunk')">CYBERPUNK</button>
             <button class="btn-sigma" style="--theme-glow:#ff0000; --theme-text:#ff0000" onclick="MenuSystem.setTheme('bloodmoon')">BLOOD MOON</button>
         </div>
-        <button class="mt-12 text-sm text-gray-400 hover:text-white" onclick="MenuSystem.showMainMenu()"><< BACK</button>
+        <button class="mt-12 text-sm text-gray-400 hover:text-white tracking-widest" onclick="MenuSystem.showMainMenu()"><< BACK</button>
+    </div>
+
+    <!-- STATISTICS -->
+    <div id="stats-menu" class="menu-layer hidden-layer">
+        <h2 class="text-2xl sm:text-3xl font-bold mb-8 text-white tracking-widest text-center neon-text" style="color:#ffaa00;">BATTLE TELEMETRY</h2>
+        <div class="w-11/12 max-w-md sigma-panel p-6 rounded-lg text-left space-y-4 font-bold text-lg">
+            <div class="flex justify-between border-b border-gray-700 pb-2">
+                <span class="text-cyan-400">TOTAL TURNS:</span> <span id="stat-turns" class="text-white">0</span>
+            </div>
+            <div class="flex justify-between border-b border-gray-700 pb-2">
+                <span class="text-red-400">ENEMIES SLAIN:</span> <span id="stat-kills" class="text-white">0</span>
+            </div>
+            <div class="flex justify-between border-b border-gray-700 pb-2">
+                <span class="text-yellow-400">CHECKS DELIVERED:</span> <span id="stat-checks" class="text-white">0</span>
+            </div>
+            <div class="flex justify-between border-b border-gray-700 pb-2">
+                <span class="text-purple-400">FATALITIES:</span> <span id="stat-fatalities" class="text-white">0</span>
+            </div>
+        </div>
+        <button class="mt-12 text-sm text-gray-400 hover:text-white tracking-widest" onclick="MenuSystem.showMainMenu()"><< BACK</button>
     </div>
 
     <!-- GAME OVER / FATALITY SCREEN -->
-    <div id="game-over-screen" class="menu-layer hidden-layer bg-black/90">
+    <div id="game-over-screen" class="menu-layer hidden-layer bg-black/95">
         <h1 id="fatality-title" class="fatality-text mb-4">SKAKMAT</h1>
-        <p id="winner-text" class="text-2xl font-bold text-white tracking-widest mb-12">PLAYER WINS</p>
-        <button class="btn-sigma" onclick="MenuSystem.showMainMenu()">RETURN TO BASE</button>
+        <p id="winner-text" class="text-xl sm:text-2xl font-bold text-white tracking-widest mb-12 text-center px-4">PLAYER WINS</p>
+        <div class="w-11/12 max-w-xs space-y-4">
+            <button class="btn-sigma" onclick="GameCore.undo()" id="btn-undo-death" style="--theme-glow:#00ffff;">TIME TRAVEL (UNDO)</button>
+            <button class="btn-sigma" onclick="MenuSystem.showMainMenu()" style="--theme-glow:#ffaa00;">RETURN TO BASE</button>
+        </div>
     </div>
 
     <!-- GAME HUD -->
-    <div id="game-hud" class="ui-layer top-0 left-0 w-full h-full pointer-events-none hidden-layer">
+    <div id="game-hud" class="ui-layer top-0 left-0 w-full h-full pointer-events-none hidden-layer flex flex-col justify-between">
         <!-- TOP PANELS -->
-        <div class="w-full p-4 flex justify-between items-start pointer-events-none">
-            <div class="sigma-panel px-6 py-3 rounded-md shadow-2xl pointer-events-auto flex items-center gap-4">
-                <div id="player-icon" class="w-12 h-12 rounded-full flex items-center justify-center border-2 text-2xl bg-gray-900">♟</div>
-                <div>
-                    <h1 class="text-xl font-black tracking-widest neon-text" id="player-name">PLAYER</h1>
-                    <p class="text-xs opacity-70" id="status-player">GILIRANMU</p>
+        <div class="w-full p-2 sm:p-4 flex justify-between items-start pointer-events-none hud-container">
+            <div class="sigma-panel px-4 sm:px-6 py-2 sm:py-3 rounded-md shadow-2xl pointer-events-auto flex items-center gap-3 w-full sm:w-auto">
+                <div id="player-icon" class="w-8 h-8 sm:w-12 sm:h-12 rounded-full flex items-center justify-center border-2 text-lg sm:text-2xl bg-gray-900">♟</div>
+                <div class="flex-1">
+                    <h1 class="text-sm sm:text-xl font-black tracking-widest neon-text" id="player-name">PLAYER</h1>
+                    <p class="text-[10px] sm:text-xs opacity-70" id="status-player">GILIRANMU</p>
                 </div>
             </div>
             
-            <div class="sigma-panel px-6 py-3 rounded-md shadow-2xl pointer-events-auto flex items-center gap-4 flex-row-reverse text-right">
-                <div id="enemy-icon" class="w-12 h-12 rounded-full flex items-center justify-center border-2 text-2xl bg-gray-900">♙</div>
-                <div>
-                    <h1 class="text-xl font-black tracking-widest blood-text" id="enemy-name">AI NEMESIS</h1>
-                    <p class="text-xs opacity-70" id="status-ai">MENUNGGU</p>
+            <div class="sigma-panel px-4 sm:px-6 py-2 sm:py-3 rounded-md shadow-2xl pointer-events-auto flex items-center gap-3 flex-row-reverse text-right w-full sm:w-auto mt-2 sm:mt-0">
+                <div id="enemy-icon" class="w-8 h-8 sm:w-12 sm:h-12 rounded-full flex items-center justify-center border-2 text-lg sm:text-2xl bg-gray-900">♙</div>
+                <div class="flex-1">
+                    <h1 class="text-sm sm:text-xl font-black tracking-widest blood-text" id="enemy-name">NEMESIS</h1>
+                    <p class="text-[10px] sm:text-xs opacity-70" id="status-ai">MENUNGGU</p>
                 </div>
             </div>
         </div>
         
         <!-- Center Check Warning -->
-        <div id="check-warning" class="absolute top-24 left-1/2 transform -translate-x-1/2 text-red-500 font-black text-2xl tracking-widest animate-pulse hidden-layer">
+        <div id="check-warning" class="absolute top-1/4 left-1/2 transform -translate-x-1/2 text-red-500 font-black text-xl sm:text-3xl tracking-widest animate-pulse hidden-layer bg-black/50 px-6 py-2 rounded-full border border-red-500 backdrop-blur-sm pointer-events-none">
             >> SKAK <<
         </div>
 
-        <!-- UNDO / REDO CONTROLS -->
-        <div class="absolute bottom-8 right-8 flex gap-4 pointer-events-auto">
-            <button id="btn-undo" class="btn-sigma text-sm py-2 px-4 opacity-30 pointer-events-none" onclick="GameCore.undo()">◄ UNDO</button>
-            <button id="btn-redo" class="btn-sigma text-sm py-2 px-4 opacity-30 pointer-events-none" onclick="GameCore.redo()">REDO ►</button>
+        <!-- BOTTOM CONTROLS & MINI STATS -->
+        <div class="w-full p-4 flex justify-between items-end pointer-events-none">
+            <!-- Mini Stats Left -->
+            <div class="sigma-panel px-3 py-2 rounded pointer-events-auto text-xs sm:text-sm font-bold opacity-80 desktop-only flex gap-4">
+                <span class="text-red-400">⚔️ <span id="mini-kills">0</span></span>
+                <span class="text-yellow-400">⏱️ <span id="mini-turns">0</span></span>
+            </div>
+
+            <!-- UNDO / REDO CONTROLS -->
+            <div class="flex gap-2 sm:gap-4 pointer-events-auto w-full sm:w-auto justify-end">
+                <button id="btn-undo" class="btn-sigma text-xs sm:text-sm py-2 px-3 sm:px-4 opacity-30 pointer-events-none" onclick="GameCore.undo()">◄ UNDO</button>
+                <button id="btn-redo" class="btn-sigma text-xs sm:text-sm py-2 px-3 sm:px-4 opacity-30 pointer-events-none" onclick="GameCore.redo()">REDO ►</button>
+            </div>
         </div>
     </div>
 
-    <div id="cinematic-bar-top" class="ui-layer top-0 left-0 w-full h-24 bg-black transition-transform duration-200 -translate-y-full"></div>
-    <div id="cinematic-bar-bottom" class="ui-layer bottom-0 left-0 w-full h-24 bg-black transition-transform duration-200 translate-y-full"></div>
+    <!-- Cinematic Bars -->
+    <div id="cinematic-bar-top" class="ui-layer top-0 left-0 w-full h-16 sm:h-24 bg-black transition-transform duration-200 -translate-y-full"></div>
+    <div id="cinematic-bar-bottom" class="ui-layer bottom-0 left-0 w-full h-16 sm:h-24 bg-black transition-transform duration-200 translate-y-full"></div>
 
     <canvas id="gameCanvas"></canvas>
 
     <script>
         /**
          * =====================================================================
-         * SIGMA CHESS RPG V2 - FATALITY EDITION
+         * SIGMA CHESS RPG V3 - FATALITY EDITION (FULL FIDE RULES)
+         * Architecture: S3 MIT Level - Decoupled Logic & Visualization
+         * Featuring: Castling, En Passant, Promotion, 50-Move Rule, Stalemate
          * =====================================================================
          */
 
@@ -232,10 +279,8 @@
                     osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
                     gain.gain.setValueAtTime(vol, this.ctx.currentTime);
                     gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
-                    osc.connect(gain);
-                    gain.connect(this.ctx.destination);
-                    osc.start();
-                    osc.stop(this.ctx.currentTime + duration);
+                    osc.connect(gain); gain.connect(this.ctx.destination);
+                    osc.start(); osc.stop(this.ctx.currentTime + duration);
                 } catch(e) {}
             },
             playUI() { this.play('sine', 800, 0.1, 0.1); },
@@ -255,67 +300,85 @@
             playFatality() {
                 this.play('sawtooth', 60, 2.0, 0.5);
                 this.play('square', 40, 2.0, 0.5);
+            },
+            playPromote() {
+                this.play('sine', 400, 0.1, 0.1);
+                setTimeout(()=>this.play('sine', 600, 0.1, 0.1), 100);
+                setTimeout(()=>this.play('sine', 800, 0.3, 0.1), 200);
             }
         };
 
-        // Otomatis aktifkan AudioContext pada klik pertama di manapun
         window.addEventListener('click', () => AudioSys.init(), {once: true});
         window.addEventListener('touchstart', () => AudioSys.init(), {once: true});
 
+        // --- GLOBAL STATE ---
         const State = {
-            turn: 'w',
-            playerColor: 'w',
-            gameState: 'MENU', // MENU, IDLE, ANIMATING, GAME_OVER
-            selectedSquare: null,
-            validMoves: [],
+            turn: 'w', playerColor: 'w',
+            gameState: 'MENU',
+            selectedSquare: null, validMoves: [],
             camera: { x: 0, y: 0, shakeX: 0, shakeY: 0, shakeIntensity: 0 },
-            invertColors: false, // For hit-stop effect
-            particles: [],
-            floatingTexts: [],
-            visualPieces: [],
+            invertColors: false,
+            particles: [], visualPieces: [],
             activeTheme: 'cyberpunk',
             isCheck: false,
-            // History State untuk Undo/Redo
-            history: [],
-            historyIndex: -1
+            history: [], historyIndex: -1,
+            // Statistik
+            stats: { turns: 0, kills: 0, checks: 0, fatalities: 0 }
         };
 
         // --- UI & MENUS ---
         const MenuSystem = {
-            hideAll() {
-                document.querySelectorAll('.menu-layer').forEach(el => el.classList.add('hidden-layer'));
-            },
+            hideAll() { document.querySelectorAll('.menu-layer').forEach(el => el.classList.add('hidden-layer')); },
             showMainMenu() {
-                AudioSys.playUI();
-                this.hideAll();
+                AudioSys.playUI(); this.hideAll();
                 document.getElementById('main-menu').classList.remove('hidden-layer');
                 document.getElementById('game-hud').classList.add('hidden-layer');
                 State.gameState = 'MENU';
+                this.updateStatsUI();
             },
-            showSideSelection() {
-                AudioSys.playUI();
-                this.hideAll();
-                document.getElementById('side-menu').classList.remove('hidden-layer');
-            },
-            showSettings() {
-                AudioSys.playUI();
-                this.hideAll();
-                document.getElementById('settings-menu').classList.remove('hidden-layer');
-            },
+            showSideSelection() { AudioSys.playUI(); this.hideAll(); document.getElementById('side-menu').classList.remove('hidden-layer'); },
+            showSettings() { AudioSys.playUI(); this.hideAll(); document.getElementById('settings-menu').classList.remove('hidden-layer'); },
+            showStatsMenu() { AudioSys.playUI(); this.hideAll(); document.getElementById('stats-menu').classList.remove('hidden-layer'); },
             setTheme(themeName) {
-                AudioSys.playUI();
-                State.activeTheme = themeName;
+                AudioSys.playUI(); State.activeTheme = themeName;
                 const t = THEMES[themeName];
                 document.body.style.setProperty('--theme-glow', t.glow);
                 document.body.style.setProperty('--theme-glow-dim', t.glowDim);
                 document.body.style.setProperty('--theme-text', t.glow);
+            },
+            updateStatsUI() {
+                document.getElementById('stat-turns').innerText = State.stats.turns;
+                document.getElementById('stat-kills').innerText = State.stats.kills;
+                document.getElementById('stat-checks').innerText = State.stats.checks;
+                document.getElementById('stat-fatalities').innerText = State.stats.fatalities;
+                document.getElementById('mini-turns').innerText = State.stats.turns;
+                document.getElementById('mini-kills').innerText = State.stats.kills;
             }
         };
 
-        // --- LOGIKA CATUR LEGAL (SKAK & SKAKMAT) ---
+        // --- LOGIKA CATUR LEGAL (ALL FIDE RULES) ---
         class ChessEngine {
             constructor() {
                 this.board = Array(8).fill(null).map(() => Array(8).fill(null));
+                this.castling = { w: {k:true, q:true}, b: {k:true, q:true} };
+                this.epSquare = null; // Target En Passant (kotak kosong yg dilompati)
+                this.halfMoves = 0; // Untuk aturan 50 langkah draw
+            }
+
+            cloneState() {
+                return {
+                    board: this.board.map(row => row.map(p => p ? {...p} : null)),
+                    castling: JSON.parse(JSON.stringify(this.castling)),
+                    epSquare: this.epSquare ? {...this.epSquare} : null,
+                    halfMoves: this.halfMoves
+                };
+            }
+
+            restoreState(state) {
+                this.board = state.board.map(row => row.map(p => p ? {...p} : null));
+                this.castling = JSON.parse(JSON.stringify(state.castling));
+                this.epSquare = state.epSquare ? {...state.epSquare} : null;
+                this.halfMoves = state.halfMoves;
             }
 
             setupBoard() {
@@ -327,6 +390,9 @@
                     this.board[6][i] = { color: 'w', type: 'p' };
                     this.board[7][i] = { color: 'w', type: order[i] };
                 }
+                this.castling = { w: {k:true, q:true}, b: {k:true, q:true} };
+                this.epSquare = null;
+                this.halfMoves = 0;
             }
 
             getPiece(x, y) {
@@ -334,12 +400,12 @@
                 return this.board[y][x];
             }
 
-            // Dapatkan langkah pseudo-legal (mengabaikan aturan Skak)
             getPseudoMoves(x, y, boardState = this.board) {
                 const piece = boardState[y][x];
                 if (!piece) return [];
                 const moves = [];
                 const color = piece.color;
+                const oppColor = color === 'w' ? 'b' : 'w';
                 const dir = color === 'w' ? -1 : 1;
 
                 const addIfValid = (nx, ny, canCapture = true, mustCapture = false) => {
@@ -362,13 +428,20 @@
 
                 switch (piece.type) {
                     case 'p':
-                        if (addIfValid(x, y + dir, false, false)) {
+                        if (addIfValid(x, y + dir, false, false)) { // Maju 1
                             if ((color === 'w' && y === 6) || (color === 'b' && y === 1)) {
-                                addIfValid(x, y + dir * 2, false, false);
+                                addIfValid(x, y + dir * 2, false, false); // Maju 2
                             }
                         }
+                        // Makan normal
                         addIfValid(x - 1, y + dir, true, true);
                         addIfValid(x + 1, y + dir, true, true);
+                        // En Passant
+                        if (this.epSquare && this.epSquare.y === y + dir) {
+                            if (this.epSquare.x === x - 1 || this.epSquare.x === x + 1) {
+                                moves.push({x: this.epSquare.x, y: this.epSquare.y, target: {type:'p', color:oppColor}, isEP: true});
+                            }
+                        }
                         break;
                     case 'n':
                         [[-1,-2],[1,-2],[-2,-1],[2,-1],[-1,2],[1,2],[-2,1],[2,1]].forEach(([dx, dy]) => addIfValid(x+dx, y+dy));
@@ -384,23 +457,38 @@
                         break;
                     case 'k':
                         [[-1,-1],[1,-1],[-1,1],[1,1],[0,-1],[0,1],[-1,0],[1,0]].forEach(([dx, dy]) => addIfValid(x+dx, y+dy));
+                        
+                        // Castling Logic
+                        if (this.castling[color].k) {
+                            if (!boardState[y][5] && !boardState[y][6] &&
+                                !this.isSquareAttacked(4, y, oppColor, boardState) &&
+                                !this.isSquareAttacked(5, y, oppColor, boardState) &&
+                                !this.isSquareAttacked(6, y, oppColor, boardState)) {
+                                moves.push({x: 6, y: y, target: null, isCastle: true});
+                            }
+                        }
+                        if (this.castling[color].q) {
+                            if (!boardState[y][1] && !boardState[y][2] && !boardState[y][3] &&
+                                !this.isSquareAttacked(4, y, oppColor, boardState) &&
+                                !this.isSquareAttacked(3, y, oppColor, boardState) &&
+                                !this.isSquareAttacked(2, y, oppColor, boardState)) {
+                                moves.push({x: 2, y: y, target: null, isCastle: true});
+                            }
+                        }
                         break;
                 }
                 return moves;
             }
 
-            // Deteksi apakah sebuah kotak diserang oleh warna musuh
             isSquareAttacked(targetX, targetY, attackerColor, boardState = this.board) {
                 for (let y = 0; y < 8; y++) {
                     for (let x = 0; x < 8; x++) {
                         const piece = boardState[y][x];
                         if (piece && piece.color === attackerColor) {
-                            // Untuk pion, hitung attack murni (diagonal), bukan pseudo-moves biasa
                             if (piece.type === 'p') {
                                 const dir = attackerColor === 'w' ? -1 : 1;
                                 if ((targetY === y + dir) && (targetX === x - 1 || targetX === x + 1)) return true;
                             } else if (piece.type === 'k') {
-                                // Raja serang 1 kotak sekitar
                                 if (Math.abs(targetX - x) <= 1 && Math.abs(targetY - y) <= 1) return true;
                             } else {
                                 const moves = this.getPseudoMoves(x, y, boardState);
@@ -417,35 +505,24 @@
                 for (let y = 0; y < 8; y++) {
                     for (let x = 0; x < 8; x++) {
                         const p = boardState[y][x];
-                        if (p && p.type === 'k' && p.color === color) {
-                            kx = x; ky = y; break;
-                        }
+                        if (p && p.type === 'k' && p.color === color) { kx = x; ky = y; break; }
                     }
                 }
                 if (kx === -1) return false;
                 return this.isSquareAttacked(kx, ky, color === 'w' ? 'b' : 'w', boardState);
             }
 
-            // Langkah LEGAL: Pseudo-moves yang tidak membuat raja sendiri dalam status Skak
             getLegalMoves(x, y) {
                 const piece = this.getPiece(x, y);
                 if (!piece) return [];
                 const pseudoMoves = this.getPseudoMoves(x, y);
                 const legalMoves = [];
+                const savedState = this.cloneState(); // Deep copy state untuk simulasi aman
 
                 for (let move of pseudoMoves) {
-                    // Simulasi langkah
-                    const targetPieceOrig = this.board[move.y][move.x];
-                    this.board[move.y][move.x] = piece;
-                    this.board[y][x] = null;
-
-                    if (!this.isInCheck(piece.color)) {
-                        legalMoves.push(move);
-                    }
-
-                    // Undo simulasi
-                    this.board[y][x] = piece;
-                    this.board[move.y][move.x] = targetPieceOrig;
+                    this.movePieceLogic(x, y, move.x, move.y, move);
+                    if (!this.isInCheck(piece.color)) legalMoves.push(move);
+                    this.restoreState(savedState);
                 }
                 return legalMoves;
             }
@@ -464,17 +541,63 @@
                 return moves;
             }
 
-            movePiece(fromX, fromY, toX, toY) {
+            // Fungsi inti mutasi logika (Tanpa visual)
+            movePieceLogic(fromX, fromY, toX, toY, moveObj) {
                 const piece = this.board[fromY][fromX];
+                const target = this.board[toY][toX];
+                
+                // 50 Move rule counter
+                if (piece.type === 'p' || target) this.halfMoves = 0;
+                else this.halfMoves++;
+
+                // Eksekusi En Passant
+                if (moveObj && moveObj.isEP) {
+                    this.board[fromY][toX] = null; // Hapus pion yg dilompati
+                }
+
+                // Eksekusi Castling (Pindah Benteng otomatis)
+                if (piece.type === 'k' && Math.abs(toX - fromX) === 2) {
+                    if (toX > fromX) { // Kingside
+                        this.board[fromY][5] = this.board[fromY][7];
+                        this.board[fromY][7] = null;
+                    } else { // Queenside
+                        this.board[fromY][3] = this.board[fromY][0];
+                        this.board[fromY][0] = null;
+                    }
+                }
+
+                // Pindah posisi utama
                 this.board[toY][toX] = piece;
                 this.board[fromY][fromX] = null;
-                if (piece.type === 'p' && (toY === 0 || toY === 7)) piece.type = 'q';
+
+                // Update Hak Castling
+                if (piece.type === 'k') { this.castling[piece.color].k = false; this.castling[piece.color].q = false; }
+                if (piece.type === 'r') {
+                    if (fromX === 0) this.castling[piece.color].q = false;
+                    if (fromX === 7) this.castling[piece.color].k = false;
+                }
+                if (target && target.type === 'r') {
+                    if (toX === 0) this.castling[target.color].q = false;
+                    if (toX === 7) this.castling[target.color].k = false;
+                }
+
+                // Update En Passant Target
+                this.epSquare = null;
+                if (piece.type === 'p' && Math.abs(toY - fromY) === 2) {
+                    this.epSquare = { x: fromX, y: (fromY + toY) / 2 };
+                }
+
+                // Auto Promosi
+                if (piece.type === 'p' && (toY === 0 || toY === 7)) {
+                    piece.type = 'q';
+                    piece.isPromoted = true; // Flag untuk efek visual
+                }
             }
         }
 
         const Engine = new ChessEngine();
 
-        // --- RENDERER VISUAL (DENGAN ROTASI BOARD OPTIONAL) ---
+        // --- RENDERER VISUAL ---
         class VisualPiece {
             constructor(x, y, logicalPiece) {
                 this.logicalX = x; this.logicalY = y;
@@ -486,7 +609,7 @@
 
             update() {
                 if (this.isDead) {
-                    this.scale = MathUtils.lerp(this.scale, 0, 0.15); // Disappear faster
+                    this.scale = MathUtils.lerp(this.scale, 0, 0.15);
                     this.opacity = MathUtils.lerp(this.opacity, 0, 0.15);
                     return;
                 }
@@ -498,41 +621,30 @@
 
             draw(ctx, cellSize, offsetX, offsetY) {
                 if (this.opacity < 0.05) return;
-                
-                // Rotasi visual jika pemain pakai Hitam
                 let visualX = State.playerColor === 'w' ? this.renderX : 7 - this.renderX;
                 let visualY = State.playerColor === 'w' ? this.renderY : 7 - this.renderY;
-
                 const px = offsetX + visualX * cellSize + cellSize / 2;
                 const py = offsetY + visualY * cellSize + cellSize / 2;
 
-                ctx.save();
-                ctx.translate(px, py);
-                ctx.scale(this.scale, this.scale);
-                ctx.globalAlpha = this.opacity;
+                ctx.save(); ctx.translate(px, py); ctx.scale(this.scale, this.scale); ctx.globalAlpha = this.opacity;
 
-                ctx.beginPath();
-                ctx.ellipse(0, cellSize*0.35, cellSize*0.25, cellSize*0.08, 0, 0, Math.PI*2);
-                ctx.fillStyle = 'rgba(0,0,0,0.6)';
-                ctx.fill();
+                ctx.beginPath(); ctx.ellipse(0, cellSize*0.35, cellSize*0.25, cellSize*0.08, 0, 0, Math.PI*2);
+                ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fill();
 
                 ctx.font = `bold ${cellSize * 0.7}px Arial`;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                
+                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
                 const isWhite = this.piece.color === 'w';
                 const theme = THEMES[State.activeTheme];
                 ctx.fillStyle = isWhite ? '#ffffff' : '#222222';
+                ctx.shadowBlur = 15; ctx.shadowColor = isWhite ? theme.glow : '#ff0000';
                 
-                ctx.shadowBlur = 15;
-                ctx.shadowColor = isWhite ? theme.glow : '#ff0000';
-                
-                if (!isWhite) {
-                    ctx.strokeStyle = '#ff3333';
-                    ctx.lineWidth = 2;
-                    ctx.strokeText(PIECE_SYMBOLS[this.piece.color][this.piece.type], 0, 0);
-                }
+                if (!isWhite) { ctx.strokeStyle = '#ff3333'; ctx.lineWidth = 2; ctx.strokeText(PIECE_SYMBOLS[this.piece.color][this.piece.type], 0, 0); }
                 ctx.fillText(PIECE_SYMBOLS[this.piece.color][this.piece.type], 0, 0);
+                
+                if (this.piece.isPromoted) {
+                    ctx.shadowColor = '#ffff00'; ctx.shadowBlur = 20;
+                    ctx.strokeStyle = '#ffff00'; ctx.lineWidth = 1; ctx.strokeText(PIECE_SYMBOLS[this.piece.color][this.piece.type], 0, 0);
+                }
                 ctx.restore();
             }
         }
@@ -540,20 +652,13 @@
         class Particle {
             constructor(x, y, color, isText = false, text = "") {
                 this.x = x; this.y = y;
-                // Ledakan lebih agresif
-                this.vx = MathUtils.random(-20, 20);
-                this.vy = MathUtils.random(-20, 20);
-                this.life = 1.0;
-                this.color = color;
+                this.vx = MathUtils.random(-20, 20); this.vy = MathUtils.random(-20, 20);
+                this.life = 1.0; this.color = color;
                 this.size = MathUtils.random(4, 12);
-                this.isText = isText;
-                this.text = text;
+                this.isText = isText; this.text = text;
             }
             update() {
-                this.x += this.vx;
-                this.y += this.vy;
-                this.vy += 0.8; // Gravity kuat
-                // Partikel hilang sangat cepat untuk cegah lag
+                this.x += this.vx; this.y += this.vy; this.vy += 0.8;
                 this.life -= MathUtils.random(0.06, 0.1); 
                 if(this.isText) { this.vy -= 1.5; this.life -= 0.02; }
             }
@@ -561,20 +666,13 @@
                 if (this.life <= 0) return;
                 ctx.globalAlpha = this.life;
                 if (this.isText) {
-                    ctx.font = '900 35px "Courier New"';
-                    ctx.fillStyle = this.color;
-                    ctx.textAlign = 'center';
-                    ctx.shadowBlur = 15;
-                    ctx.shadowColor = this.color;
-                    ctx.strokeStyle = '#000';
-                    ctx.lineWidth = 4;
-                    ctx.strokeText(this.text, this.x, this.y);
-                    ctx.fillText(this.text, this.x, this.y);
+                    ctx.font = '900 clamp(20px, 4vw, 35px) "Courier New"';
+                    ctx.fillStyle = this.color; ctx.textAlign = 'center';
+                    ctx.shadowBlur = 15; ctx.shadowColor = this.color;
+                    ctx.strokeStyle = '#000'; ctx.lineWidth = 4;
+                    ctx.strokeText(this.text, this.x, this.y); ctx.fillText(this.text, this.x, this.y);
                 } else {
-                    ctx.fillStyle = this.color;
-                    ctx.beginPath();
-                    ctx.arc(this.x, this.y, this.size, 0, Math.PI*2);
-                    ctx.fill();
+                    ctx.fillStyle = this.color; ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI*2); ctx.fill();
                 }
                 ctx.globalAlpha = 1.0;
             }
@@ -587,82 +685,86 @@
 
             resize() {
                 const dpr = window.devicePixelRatio || 1;
-                this.canvas.width = window.innerWidth * dpr;
-                this.canvas.height = window.innerHeight * dpr;
+                this.canvas.width = window.innerWidth * dpr; this.canvas.height = window.innerHeight * dpr;
                 this.ctx.scale(dpr, dpr);
                 const minDim = Math.min(window.innerWidth, window.innerHeight);
-                this.cellSize = Math.floor((minDim * 0.85) / 8);
+                // Responsivitas Papan Catur untuk Mobile vs Desktop
+                this.cellSize = Math.floor((minDim * 0.95) / 8); 
+                if (window.innerWidth > 640) this.cellSize = Math.floor((minDim * 0.8) / 8);
+
                 this.offsetX = (window.innerWidth - (this.cellSize * 8)) / 2;
-                this.offsetY = (window.innerHeight - (this.cellSize * 8)) / 2 + 20;
+                // Geser Y jika portrait (mobile) agar HUD atas tidak menutupi
+                this.offsetY = window.innerHeight > window.innerWidth ? (window.innerHeight - this.cellSize*8)/2 + 40 : (window.innerHeight - this.cellSize*8)/2 + 20;
             },
 
             triggerScreenShake(intensity = 15) { State.camera.shakeIntensity = intensity; },
 
-            createExplosion(logicalX, logicalY, color, damageText, isFatality = false) {
+            createExplosion(logicalX, logicalY, color, textMsg, isFatality = false) {
                 let vx = State.playerColor === 'w' ? logicalX : 7 - logicalX;
                 let vy = State.playerColor === 'w' ? logicalY : 7 - logicalY;
                 const px = this.offsetX + vx * this.cellSize + this.cellSize/2;
                 const py = this.offsetY + vy * this.cellSize + this.cellSize/2;
                 
-                const count = isFatality ? 80 : 25; // Partikel lebih banyak jika fatality
-                for(let i=0; i<count; i++) {
-                    State.particles.push(new Particle(px, py, color));
-                }
-                if (damageText) {
-                    State.particles.push(new Particle(px, py - 30, color, true, damageText));
-                }
+                const count = isFatality ? 80 : 25;
+                for(let i=0; i<count; i++) State.particles.push(new Particle(px, py, color));
+                if (textMsg) State.particles.push(new Particle(px, py - 30, color, true, textMsg));
                 this.triggerScreenShake(isFatality ? 30 : 15);
             },
 
-            // ANIMASI BATTLE SADIS
-            async executeMoveAnimation(visualPiece, toX, toY, targetPiece, isFatalityCheck = false) {
+            async executeMoveAnimation(visualPiece, toX, toY, moveObj) {
                 State.gameState = 'ANIMATING';
-                
-                if (targetPiece) {
+                const isFatalityCheck = moveObj.target && moveObj.target.type === 'k'; // Logika Cinematic
+
+                // Cek Castling Animation
+                let rookVisual = null; let rookToX = 0;
+                if (moveObj.isCastle) {
+                    const rookX = toX > visualPiece.logicalX ? 7 : 0;
+                    rookToX = toX > visualPiece.logicalX ? 5 : 3;
+                    rookVisual = State.visualPieces.find(vp => vp.logicalX === rookX && vp.logicalY === visualPiece.logicalY);
+                }
+
+                // Cari target visual (bisa beda kordinat jika En Passant)
+                let targetVisual = State.visualPieces.find(vp => vp.logicalX === toX && vp.logicalY === toY);
+                let explodeY = toY;
+                if (moveObj.isEP) {
+                    targetVisual = State.visualPieces.find(vp => vp.logicalX === toX && vp.logicalY === visualPiece.logicalY);
+                    explodeY = visualPiece.logicalY;
+                }
+
+                if (targetVisual) {
                     document.getElementById('cinematic-bar-top').style.transform = 'translateY(0)';
                     document.getElementById('cinematic-bar-bottom').style.transform = 'translateY(0)';
                     visualPiece.isAttacking = true;
                     
-                    // Anticipation mundur jauh
-                    const dx = toX - visualPiece.logicalX;
-                    const dy = toY - visualPiece.logicalY;
+                    const dx = toX - visualPiece.logicalX; const dy = toY - visualPiece.logicalY;
                     const angle = Math.atan2(dy, dx);
-                    visualPiece.renderX -= Math.cos(angle) * 1.5;
-                    visualPiece.renderY -= Math.sin(angle) * 1.5;
+                    visualPiece.renderX -= Math.cos(angle) * 1.5; visualPiece.renderY -= Math.sin(angle) * 1.5;
                     await new Promise(r => setTimeout(r, 250));
 
-                    // DASH KILAT
-                    visualPiece.renderX = toX;
-                    visualPiece.renderY = toY;
+                    visualPiece.renderX = toX; visualPiece.renderY = toY;
                     await new Promise(r => setTimeout(r, 50));
 
-                    // IMPACT & FATALITY LOGIC
                     const theme = THEMES[State.activeTheme];
-                    const color = targetPiece.piece.color === 'w' ? theme.particlePlayer : theme.particleEnemy;
+                    const color = targetVisual.piece.color === 'w' ? theme.particlePlayer : theme.particleEnemy;
                     
                     if (isFatalityCheck) {
-                        // FATALITY SEQUENCE
-                        State.invertColors = true; // Invert layar sejenak
-                        AudioSys.playFatality();
-                        this.createExplosion(toX, toY, '#ff0000', "FATALITY!", true);
+                        State.invertColors = true; AudioSys.playFatality(); State.stats.fatalities++;
+                        this.createExplosion(toX, explodeY, '#ff0000', "FATALITY!", true);
                         visualPiece.scale = 2.0;
                         await new Promise(r => setTimeout(r, 150));
                         State.invertColors = false;
                         await new Promise(r => setTimeout(r, 400));
                     } else {
-                        // NORMAL IMPACT
-                        AudioSys.playCapture();
-                        const dmg = PIECE_VALUES[targetPiece.piece.type] * MathUtils.random(0.8, 1.2);
+                        AudioSys.playCapture(); State.stats.kills++;
+                        const dmg = PIECE_VALUES[targetVisual.piece.type] * MathUtils.random(0.8, 1.2);
                         const dmgText = Math.random() > 0.6 ? `CRIT! ${Math.floor(dmg*1.5)}` : `-${Math.floor(dmg)}`;
-                        this.createExplosion(toX, toY, color, dmgText);
+                        this.createExplosion(toX, explodeY, color, dmgText);
                         visualPiece.scale = 1.4;
                     }
                     
-                    targetPiece.isDead = true;
-                    await new Promise(r => setTimeout(r, 200)); // Hit-stop
-                    
-                    visualPiece.isAttacking = false;
-                    visualPiece.scale = 1;
+                    targetVisual.isDead = true;
+                    await new Promise(r => setTimeout(r, 200)); 
+                    visualPiece.isAttacking = false; visualPiece.scale = 1;
                     document.getElementById('cinematic-bar-top').style.transform = 'translateY(-100%)';
                     document.getElementById('cinematic-bar-bottom').style.transform = 'translateY(100%)';
                 } else {
@@ -671,8 +773,17 @@
                     await new Promise(r => setTimeout(r, 150));
                 }
 
-                // Update Engine & Next Turn
-                Engine.movePiece(visualPiece.piece.logicalX_old, visualPiece.piece.logicalY_old, toX, toY);
+                if (rookVisual) rookVisual.logicalX = rookToX; // Rokade Visual Update
+
+                // Panggil Engine Inti
+                Engine.movePieceLogic(visualPiece.piece.logicalX_old, visualPiece.piece.logicalY_old, toX, toY, moveObj);
+                
+                // Efek Promosi
+                if (visualPiece.piece.type === 'p' && (toY === 0 || toY === 7)) {
+                    AudioSys.playPromote();
+                    this.createExplosion(toX, toY, '#ffff00', "PROMOTION!");
+                }
+
                 GameCore.syncVisualPieces();
                 GameCore.nextTurn();
             }
@@ -681,74 +792,50 @@
         // --- GAME CORE LOGIC ---
         const GameCore = {
             initGame(colorChoice) {
-                AudioSys.playUI();
-                MenuSystem.hideAll();
-                document.getElementById('game-hud').classList.remove('hidden-layer');
-                
+                AudioSys.playUI(); MenuSystem.hideAll(); document.getElementById('game-hud').classList.remove('hidden-layer');
                 if (colorChoice === 'random') colorChoice = Math.random() > 0.5 ? 'w' : 'b';
-                State.playerColor = colorChoice;
-                State.turn = 'w';
-                State.gameState = 'IDLE';
-                State.isCheck = false;
-                State.history = [];
-                State.historyIndex = -1;
                 
-                // Atur UI Icons
+                State.playerColor = colorChoice; State.turn = 'w'; State.gameState = 'IDLE';
+                State.isCheck = false; State.history = []; State.historyIndex = -1;
+                State.stats = { turns: 0, kills: 0, checks: 0, fatalities: 0 };
+                
                 const pColorHex = State.playerColor === 'w' ? '#00ffff' : '#ff0000';
                 const eColorHex = State.playerColor === 'w' ? '#ff0000' : '#00ffff';
                 document.getElementById('player-icon').innerText = State.playerColor === 'w' ? '♙' : '♟';
-                document.getElementById('player-icon').style.borderColor = pColorHex;
-                document.getElementById('player-icon').style.color = pColorHex;
+                document.getElementById('player-icon').style.borderColor = pColorHex; document.getElementById('player-icon').style.color = pColorHex;
                 document.getElementById('enemy-icon').innerText = State.playerColor === 'w' ? '♟' : '♙';
-                document.getElementById('enemy-icon').style.borderColor = eColorHex;
-                document.getElementById('enemy-icon').style.color = eColorHex;
+                document.getElementById('enemy-icon').style.borderColor = eColorHex; document.getElementById('enemy-icon').style.color = eColorHex;
 
-                Engine.setupBoard();
-                this.syncVisualPieces();
-                this.updateHUD();
-                this.saveState(); // Simpan state awal
+                Engine.setupBoard(); this.syncVisualPieces(); this.updateHUD(); this.saveState();
 
-                if (State.playerColor === 'b') {
-                    // Jika player Hitam, AI (Putih) jalan duluan
-                    setTimeout(() => this.processAITurn(), 800);
-                }
+                if (State.playerColor === 'b') setTimeout(() => this.processAITurn(), 800);
             },
 
-            // Time Travel Engine (Undo/Redo)
             saveState() {
-                // Potong history Redo jika pemain membuat pergerakan baru setelah Undo
-                if (State.historyIndex < State.history.length - 1) {
-                    State.history = State.history.slice(0, State.historyIndex + 1);
-                }
+                if (State.historyIndex < State.history.length - 1) State.history = State.history.slice(0, State.historyIndex + 1);
                 State.history.push({
-                    board: JSON.stringify(Engine.board),
-                    turn: State.turn,
-                    isCheck: State.isCheck
+                    logicState: Engine.cloneState(),
+                    turn: State.turn, isCheck: State.isCheck,
+                    stats: {...State.stats}
                 });
                 State.historyIndex = State.history.length - 1;
                 this.updateUndoRedoUI();
             },
 
             restoreState(historyState) {
-                Engine.board = JSON.parse(historyState.board);
-                State.turn = historyState.turn;
-                State.isCheck = historyState.isCheck;
-                State.gameState = 'IDLE';
-                State.selectedSquare = null;
-                State.validMoves = [];
-                this.syncVisualPieces(); // Snap instan ke posisi logic
-                this.updateHUD();
-                this.updateUndoRedoUI();
+                Engine.restoreState(historyState.logicState);
+                State.turn = historyState.turn; State.isCheck = historyState.isCheck;
+                State.stats = {...historyState.stats};
+                State.gameState = 'IDLE'; State.selectedSquare = null; State.validMoves = [];
+                this.syncVisualPieces(); this.updateHUD(); this.updateUndoRedoUI();
+                MenuSystem.updateStatsUI();
             },
 
             undo() {
                 if (State.gameState === 'ANIMATING') return;
                 AudioSys.playUI();
-                // Cari giliran pemain mundur ke belakang (melewati AI)
                 let targetIndex = State.historyIndex - 1;
-                while(targetIndex >= 0 && State.history[targetIndex].turn !== State.playerColor) {
-                    targetIndex--;
-                }
+                while(targetIndex >= 0 && State.history[targetIndex].turn !== State.playerColor) targetIndex--;
                 if (targetIndex >= 0) {
                     State.historyIndex = targetIndex;
                     document.getElementById('game-over-screen').classList.add('hidden-layer');
@@ -759,11 +846,8 @@
             redo() {
                 if (State.gameState === 'ANIMATING') return;
                 AudioSys.playUI();
-                // Cari giliran pemain maju ke depan
                 let targetIndex = State.historyIndex + 1;
-                while(targetIndex < State.history.length && State.history[targetIndex].turn !== State.playerColor) {
-                    targetIndex++;
-                }
+                while(targetIndex < State.history.length && State.history[targetIndex].turn !== State.playerColor) targetIndex++;
                 if (targetIndex < State.history.length) {
                     State.historyIndex = targetIndex;
                     document.getElementById('game-over-screen').classList.add('hidden-layer');
@@ -772,23 +856,16 @@
             },
 
             updateUndoRedoUI() {
-                const btnUndo = document.getElementById('btn-undo');
-                const btnRedo = document.getElementById('btn-redo');
-                // Cek ketersediaan Undo
+                const btnUndo = document.getElementById('btn-undo'); const btnRedo = document.getElementById('btn-redo');
+                const btnUndoDeath = document.getElementById('btn-undo-death');
                 let canUndo = false;
-                for (let i = State.historyIndex - 1; i >= 0; i--) {
-                    if (State.history[i].turn === State.playerColor) { canUndo = true; break; }
-                }
-                btnUndo.style.opacity = canUndo ? "1" : "0.3";
-                btnUndo.style.pointerEvents = canUndo ? "auto" : "none";
+                for (let i = State.historyIndex - 1; i >= 0; i--) { if (State.history[i].turn === State.playerColor) { canUndo = true; break; } }
+                btnUndo.style.opacity = canUndo ? "1" : "0.3"; btnUndo.style.pointerEvents = canUndo ? "auto" : "none";
+                btnUndoDeath.style.display = canUndo ? "block" : "none";
 
-                // Cek ketersediaan Redo
                 let canRedo = false;
-                for (let i = State.historyIndex + 1; i < State.history.length; i++) {
-                    if (State.history[i].turn === State.playerColor) { canRedo = true; break; }
-                }
-                btnRedo.style.opacity = canRedo ? "1" : "0.3";
-                btnRedo.style.pointerEvents = canRedo ? "auto" : "none";
+                for (let i = State.historyIndex + 1; i < State.history.length; i++) { if (State.history[i].turn === State.playerColor) { canRedo = true; break; } }
+                btnRedo.style.opacity = canRedo ? "1" : "0.3"; btnRedo.style.pointerEvents = canRedo ? "auto" : "none";
             },
 
             syncVisualPieces() {
@@ -802,52 +879,48 @@
             },
 
             nextTurn() {
+                if(State.turn === State.playerColor) State.stats.turns++;
                 State.turn = State.turn === 'w' ? 'b' : 'w';
-                State.selectedSquare = null;
-                State.validMoves = [];
+                State.selectedSquare = null; State.validMoves = [];
                 
-                // Checkmate / Check detection
                 State.isCheck = Engine.isInCheck(State.turn);
-                if (State.isCheck) AudioSys.playCheck(); // Mainkan Suara Peringatan
+                if (State.isCheck) { AudioSys.playCheck(); State.stats.checks++; }
+                MenuSystem.updateStatsUI();
 
                 const allLegalMoves = Engine.getAllLegalMoves(State.turn);
                 
-                if (allLegalMoves.length === 0) {
+                // Cek Skakmat / Stalemate / Draw 50 Langkah
+                if (allLegalMoves.length === 0 || Engine.halfMoves >= 100) {
                     State.gameState = 'GAME_OVER';
-                    this.saveState(); // Simpan kondisi terakhir kematian
-                    this.triggerGameOver(State.isCheck);
+                    this.saveState(); 
+                    this.triggerGameOver(State.isCheck, allLegalMoves.length > 0);
                     return;
                 }
 
                 State.gameState = 'IDLE';
-                this.updateHUD();
-                this.saveState(); // Simpan State Histori untuk setiap turn yang sah
+                this.updateHUD(); this.saveState();
 
-                if (State.turn !== State.playerColor) {
-                    setTimeout(() => this.processAITurn(), 600);
-                }
+                if (State.turn !== State.playerColor) setTimeout(() => this.processAITurn(), 600);
             },
 
-            triggerGameOver(isCheckmate) {
-                const isPlayerWin = State.turn !== State.playerColor; // Yg tidak punya move yg kalah
-                
+            triggerGameOver(isCheckmate, isDrawRule) {
+                const isPlayerWin = State.turn !== State.playerColor; 
                 setTimeout(() => {
                     document.getElementById('game-over-screen').classList.remove('hidden-layer');
                     if (isCheckmate) {
                         document.getElementById('fatality-title').innerText = "SKAKMAT";
-                        document.getElementById('winner-text').innerText = isPlayerWin ? ">> PLAYER WINS <<" : ">> AI NEMESIS WINS <<";
+                        document.getElementById('winner-text').innerText = isPlayerWin ? ">> PLAYER WINS <<" : ">> NEMESIS WINS <<";
                         document.getElementById('winner-text').style.color = isPlayerWin ? "#00ffff" : "#ff0000";
                     } else {
-                        document.getElementById('fatality-title').innerText = "STALEMATE";
-                        document.getElementById('winner-text').innerText = "DRAW / SERI";
+                        document.getElementById('fatality-title').innerText = isDrawRule ? "DRAW RULE" : "STALEMATE";
+                        document.getElementById('winner-text').innerText = "SERI";
                         document.getElementById('winner-text').style.color = "#aaaaaa";
                     }
-                }, 1000); // Tunggu sisa animasi selesai
+                }, 1000); 
             },
 
             updateHUD() {
-                const statusP = document.getElementById('status-player');
-                const statusAI = document.getElementById('status-ai');
+                const statusP = document.getElementById('status-player'); const statusAI = document.getElementById('status-ai');
                 const checkWarn = document.getElementById('check-warning');
                 
                 if (State.isCheck) checkWarn.classList.remove('hidden-layer');
@@ -865,32 +938,29 @@
             processAITurn() {
                 if (State.gameState !== 'IDLE') return;
                 let allMoves = Engine.getAllLegalMoves(State.turn);
-                if (allMoves.length === 0) return; // Sudah ditangani di nextTurn
+                if (allMoves.length === 0) return;
 
                 let bestMove = null; let maxScore = -Infinity;
                 allMoves.forEach(m => {
                     let score = MathUtils.random(0, 10); 
                     if (m.to.target) score += PIECE_VALUES[m.to.target.type] * 10;
+                    if (m.to.isPromoted) score += 900; // Prioritas promosi
                     
-                    // Simulasi sedikit untuk hindari langkah bunuh diri (basic AI)
-                    const piece = Engine.board[m.from.y][m.from.x];
-                    const target = Engine.board[m.to.y][m.to.x];
-                    Engine.board[m.to.y][m.to.x] = piece; Engine.board[m.from.y][m.from.x] = null;
-                    if (Engine.isSquareAttacked(m.to.x, m.to.y, State.playerColor)) score -= PIECE_VALUES[piece.type];
-                    Engine.board[m.from.y][m.from.x] = piece; Engine.board[m.to.y][m.to.x] = target;
+                    const savedState = Engine.cloneState();
+                    Engine.movePieceLogic(m.from.x, m.from.y, m.to.x, m.to.y, m.to);
+                    if (Engine.isSquareAttacked(m.to.x, m.to.y, State.playerColor)) {
+                        const pieceVal = PIECE_VALUES[Engine.board[m.to.y][m.to.x].type];
+                        score -= pieceVal; // Jangan buang bidak mahal sia-sia
+                    }
+                    Engine.restoreState(savedState);
 
                     if (score > maxScore) { maxScore = score; bestMove = m; }
                 });
 
                 if (bestMove) {
                     const visualPiece = State.visualPieces.find(vp => vp.logicalX === bestMove.from.x && vp.logicalY === bestMove.from.y);
-                    const targetVisual = State.visualPieces.find(vp => vp.logicalX === bestMove.to.x && vp.logicalY === bestMove.to.y);
                     visualPiece.piece.logicalX_old = bestMove.from.x; visualPiece.piece.logicalY_old = bestMove.from.y;
-                    
-                    // Cek apakah move ini akan menghasilkan checkmate
-                    const isFatality = targetVisual && targetVisual.piece.type === 'k'; // Kalo beneran makan raja (secara teori catur ga bisa, tapi untuk animasi brutal)
-                    
-                    Renderer.executeMoveAnimation(visualPiece, bestMove.to.x, bestMove.to.y, targetVisual, isFatality);
+                    Renderer.executeMoveAnimation(visualPiece, bestMove.to.x, bestMove.to.y, bestMove.to);
                 }
             }
         };
@@ -902,7 +972,6 @@
             let visualX = Math.floor((cx - Renderer.offsetX) / Renderer.cellSize);
             let visualY = Math.floor((cy - Renderer.offsetY) / Renderer.cellSize);
             
-            // Translasi input jika board diputar
             let logicalX = State.playerColor === 'w' ? visualX : 7 - visualX;
             let logicalY = State.playerColor === 'w' ? visualY : 7 - visualY;
             
@@ -921,17 +990,16 @@
             const move = State.validMoves.find(m => m.x === x && m.y === y);
             if (move && State.selectedSquare) {
                 const visualPiece = State.visualPieces.find(vp => vp.logicalX === State.selectedSquare.x && vp.logicalY === State.selectedSquare.y);
-                const targetVisual = State.visualPieces.find(vp => vp.logicalX === x && vp.logicalY === y);
                 visualPiece.piece.logicalX_old = State.selectedSquare.x; visualPiece.piece.logicalY_old = State.selectedSquare.y;
-                Renderer.executeMoveAnimation(visualPiece, x, y, targetVisual);
+                Renderer.executeMoveAnimation(visualPiece, x, y, move);
                 return;
             }
 
             const piece = Engine.getPiece(x, y);
             if (piece && piece.color === State.playerColor) {
-                AudioSys.playSelect(); // Suara pemilihan bidak
+                AudioSys.playSelect(); 
                 State.selectedSquare = {x, y};
-                State.validMoves = Engine.getLegalMoves(x, y); // Gunakan LEGAL moves
+                State.validMoves = Engine.getLegalMoves(x, y); 
                 Renderer.triggerScreenShake(3); 
             } else {
                 State.selectedSquare = null; State.validMoves = [];
@@ -949,20 +1017,16 @@
                 if (State.camera.shakeIntensity < 0.5) State.camera.shakeIntensity = 0;
             }
 
-            ctx.fillStyle = theme.darkSquare;
-            ctx.fillRect(0, 0, Renderer.canvas.width, Renderer.canvas.height);
+            ctx.fillStyle = theme.darkSquare; ctx.fillRect(0, 0, Renderer.canvas.width, Renderer.canvas.height);
 
             if (State.invertColors) {
-                ctx.globalCompositeOperation = 'difference';
-                ctx.fillStyle = 'white';
+                ctx.globalCompositeOperation = 'difference'; ctx.fillStyle = 'white';
                 ctx.fillRect(0, 0, Renderer.canvas.width, Renderer.canvas.height);
                 ctx.globalCompositeOperation = 'source-over';
             }
 
-            ctx.save();
-            ctx.translate(State.camera.shakeX, State.camera.shakeY);
+            ctx.save(); ctx.translate(State.camera.shakeX, State.camera.shakeY);
 
-            // Draw Board Outline
             ctx.strokeStyle = theme.glowDim; ctx.lineWidth = 2;
             ctx.strokeRect(Renderer.offsetX, Renderer.offsetY, cs * 8, cs * 8);
 
@@ -971,18 +1035,15 @@
                     const isLight = (x + y) % 2 === 0;
                     ctx.fillStyle = isLight ? theme.lightSquare : theme.darkSquare;
                     
-                    // Map visual box
                     let vx = State.playerColor === 'w' ? x : 7 - x;
                     let vy = State.playerColor === 'w' ? y : 7 - y;
                     
                     ctx.fillRect(Renderer.offsetX + vx * cs, Renderer.offsetY + vy * cs, cs, cs);
                     
                     if (State.selectedSquare && State.selectedSquare.x === x && State.selectedSquare.y === y) {
-                        ctx.fillStyle = theme.highlight;
-                        ctx.fillRect(Renderer.offsetX + vx * cs, Renderer.offsetY + vy * cs, cs, cs);
+                        ctx.fillStyle = theme.highlight; ctx.fillRect(Renderer.offsetX + vx * cs, Renderer.offsetY + vy * cs, cs, cs);
                     }
                     
-                    // Merahkan kotak Raja jika SKAK
                     if (State.isCheck) {
                         const p = Engine.getPiece(x,y);
                         if (p && p.type === 'k' && p.color === State.turn) {
@@ -993,19 +1054,16 @@
                 }
             }
 
-            // Draw Valid Moves
             State.validMoves.forEach(m => {
                 let vx = State.playerColor === 'w' ? m.x : 7 - m.x;
                 let vy = State.playerColor === 'w' ? m.y : 7 - m.y;
                 const px = Renderer.offsetX + vx * cs; const py = Renderer.offsetY + vy * cs;
                 
-                if (m.target) {
+                if (m.target || m.isEP) {
                     ctx.fillStyle = `rgba(255, 0, 0, ${0.3 + Math.sin(Date.now() / 150) * 0.2})`;
-                    ctx.fillRect(px, py, cs, cs);
-                    ctx.strokeStyle = '#ff0000'; ctx.lineWidth = 2; ctx.strokeRect(px, py, cs, cs);
+                    ctx.fillRect(px, py, cs, cs); ctx.strokeStyle = '#ff0000'; ctx.lineWidth = 2; ctx.strokeRect(px, py, cs, cs);
                 } else {
-                    ctx.fillStyle = theme.glowDim;
-                    ctx.beginPath(); ctx.arc(px + cs/2, py + cs/2, cs*0.15, 0, Math.PI*2); ctx.fill();
+                    ctx.fillStyle = theme.glowDim; ctx.beginPath(); ctx.arc(px + cs/2, py + cs/2, cs*0.15, 0, Math.PI*2); ctx.fill();
                 }
             });
 
@@ -1016,19 +1074,15 @@
             });
             State.visualPieces.forEach(p => { p.update(); p.draw(ctx, cs, Renderer.offsetX, Renderer.offsetY); });
 
-            // Limit dan Cleanup Particle Agresif
             if(State.particles.length > 200) State.particles.splice(0, State.particles.length - 200);
             State.particles = State.particles.filter(p => p.life > 0);
             State.particles.forEach(p => { p.update(); p.draw(ctx); });
 
-            ctx.restore();
-            requestAnimationFrame(renderLoop);
+            ctx.restore(); requestAnimationFrame(renderLoop);
         }
 
-        // --- INIT ---
         window.addEventListener('resize', () => Renderer.resize());
-        Renderer.resize();
-        requestAnimationFrame(renderLoop);
+        Renderer.resize(); requestAnimationFrame(renderLoop);
 
     </script>
 </body>
