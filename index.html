@@ -380,20 +380,17 @@
                 document.getElementById('mini-kills').innerText = State.stats.kills;
             },
             updateEvalBar(score) {
-                // Score is relative to white. + is white advantage, - is black advantage.
                 const fill = document.getElementById('eval-fill');
                 const textW = document.getElementById('eval-text-w');
                 const textB = document.getElementById('eval-text-b');
                 
-                // Clamp and convert to percentage (Range roughly -1000 to +1000 centipawns)
                 let evalCp = score / 100;
-                let winPercent = 50 + (evalCp * 5); // 1 pawn = 5% shift
-                winPercent = Math.max(5, Math.min(95, winPercent)); // Clamp between 5% and 95% unless mate
+                let winPercent = 50 + (evalCp * 5); 
+                winPercent = Math.max(5, Math.min(95, winPercent)); 
                 
-                if (score > 10000) { winPercent = 100; evalCp = "M"; } // White Mate
-                if (score < -10000) { winPercent = 0; evalCp = "-M"; } // Black Mate
+                if (score > 10000) { winPercent = 100; evalCp = "M"; } 
+                if (score < -10000) { winPercent = 0; evalCp = "-M"; } 
 
-                // If player is black, visual bar might invert if we want, but standard is white always at bottom
                 fill.style.height = `${winPercent}%`;
                 
                 let displayTxt = (evalCp > 0 && evalCp !== "M") ? `+${evalCp.toFixed(1)}` : (evalCp !== "-M" && evalCp !== "M" ? evalCp.toFixed(1) : evalCp);
@@ -412,7 +409,7 @@
                 this.castling = { w: {k:true, q:true}, b: {k:true, q:true} };
                 this.epSquare = null; 
                 this.halfMoves = 0; 
-                this.positionCounts = {}; // Untuk Threefold Repetition
+                this.positionCounts = {}; 
             }
 
             cloneState() {
@@ -448,7 +445,6 @@
                 this.recordPosition();
             }
 
-            // String hash simpel untuk mendeteksi Threefold Repetition
             getPosKey() {
                 let key = "";
                 for(let y=0; y<8; y++) {
@@ -538,7 +534,6 @@
                             } else if (piece.type === 'k') {
                                 if (Math.abs(targetX - x) <= 1 && Math.abs(targetY - y) <= 1) return true;
                             } else {
-                                // Basic pseudo-moves without infinite recursion
                                 const moves = this.getPseudoMoves(x, y);
                                 if (moves.some(m => m.to.x === targetX && m.to.y === targetY)) return true;
                             }
@@ -560,7 +555,6 @@
                 return false;
             }
 
-            // O(1) Fast Move Generation (In-place memory manipulation) required for Alpha-Beta
             makeMoveFast(move) {
                 const fromX = move.from.x, fromY = move.from.y;
                 const toX = move.to.x, toY = move.to.y;
@@ -577,11 +571,11 @@
                 this.halfMoves = (piece.type === 'p' || target) ? 0 : this.halfMoves + 1;
                 this.epSquare = null;
 
-                if (move.to.isEP) this.board[fromY][toX] = null; // Kill EP pawn
+                if (move.to.isEP) this.board[fromY][toX] = null; 
                 
                 if (move.to.isCastle) {
-                    if (toX > fromX) { this.board[fromY][5] = this.board[fromY][7]; this.board[fromY][7] = null; } // K-side
-                    else { this.board[fromY][3] = this.board[fromY][0]; this.board[fromY][0] = null; } // Q-side
+                    if (toX > fromX) { this.board[fromY][5] = this.board[fromY][7]; this.board[fromY][7] = null; } 
+                    else { this.board[fromY][3] = this.board[fromY][0]; this.board[fromY][0] = null; } 
                 }
 
                 this.board[toY][toX] = piece;
@@ -602,7 +596,6 @@
                     piece.type = 'q'; revertData.isPromoted = true;
                 }
 
-                // Jangan catat history di engine search tree untuk hemat performa, cukup hash sementara
                 return revertData;
             }
 
@@ -631,6 +624,23 @@
                 this.halfMoves = revertData.halfMoves;
             }
 
+            // Fungsi yang diperlukan untuk validasi pergerakan dari satu petak
+            getLegalMoves(x, y) {
+                const piece = this.getPiece(x, y);
+                if (!piece) return [];
+                const pseudoMoves = this.getPseudoMoves(x, y);
+                const legalMoves = [];
+
+                for (let move of pseudoMoves) {
+                    const rev = this.makeMoveFast(move);
+                    if (!this.isInCheck(piece.color)) {
+                        legalMoves.push(move);
+                    }
+                    this.unmakeMoveFast(move, rev);
+                }
+                return legalMoves;
+            }
+
             getAllLegalMoves(color) {
                 let moves = [];
                 for (let y = 0; y < 8; y++) {
@@ -656,7 +666,6 @@
         const SigmaAI = {
             nodesEvaluated: 0,
             
-            // Piece Square Tables (PST) - Evaluasi posisi per petak (perspektif Putih)
             PST: {
                 p: [
                     [0,  0,  0,  0,  0,  0,  0,  0],
@@ -727,7 +736,6 @@
                         const p = engine.board[y][x];
                         if (p) {
                             let pstVal = 0;
-                            // PST is from white perspective. Flip Y for black.
                             if (p.color === 'w') pstVal = this.PST[p.type][y][x];
                             else pstVal = this.PST[p.type][7-y][x];
                             
@@ -747,12 +755,11 @@
                 
                 if (moves.length === 0) {
                     if (engine.isInCheck(isMaximizing ? color : (color==='w'?'b':'w'))) {
-                        return isMaximizing ? -99999 + (10-depth) : 99999 - (10-depth); // Checkmate. Prefer faster mate.
+                        return isMaximizing ? -99999 + (10-depth) : 99999 - (10-depth); 
                     }
-                    return 0; // Stalemate
+                    return 0; 
                 }
 
-                // Move Ordering (Heuristik) untuk Alpha-Beta agar pruning maksimal: Prioritaskan makan bidak!
                 moves.sort((a,b) => {
                     let scoreA = a.to.target ? PIECE_VALUES[a.to.target.type] : 0;
                     if (a.to.isPromoted) scoreA += 900;
@@ -795,7 +802,6 @@
 
                 const moves = engine.getAllLegalMoves(color);
                 
-                // Shuffle for random flavor among equal best moves
                 moves.sort(() => Math.random() - 0.5);
                 moves.sort((a,b) => (b.to.target ? 1000 : 0) - (a.to.target ? 1000 : 0));
 
@@ -814,7 +820,7 @@
                 }
                 
                 State.currentEval = bestValue;
-                MenuSystem.updateEvalBar(bestValue); // Update bar with pure engine evaluation
+                MenuSystem.updateEvalBar(bestValue); 
                 
                 return bestMove;
             }
@@ -912,10 +918,10 @@
                 this.ctx.scale(dpr, dpr);
                 const minDim = Math.min(window.innerWidth, window.innerHeight);
                 this.cellSize = Math.floor((minDim * 0.90) / 8); 
-                if (window.innerWidth > 640) this.cellSize = Math.floor((minDim * 0.75) / 8); // Extra room for eval bar
+                if (window.innerWidth > 640) this.cellSize = Math.floor((minDim * 0.75) / 8); 
 
                 this.offsetX = (window.innerWidth - (this.cellSize * 8)) / 2;
-                if (window.innerWidth > 640) this.offsetX += 20; // Shift right to avoid eval bar on desktop
+                if (window.innerWidth > 640) this.offsetX += 20; 
 
                 this.offsetY = window.innerHeight > window.innerWidth ? (window.innerHeight - this.cellSize*8)/2 + 40 : (window.innerHeight - this.cellSize*8)/2 + 20;
             },
@@ -997,7 +1003,6 @@
 
                 if (rookVisual) rookVisual.logicalX = rookToX;
 
-                // Sync Full Logic Engine State
                 Engine.makeMoveFast(moveObj);
                 Engine.recordPosition();
                 
@@ -1033,7 +1038,6 @@
                 this.updateHUD(); 
                 this.saveState();
                 
-                // Initial Eval
                 const initialEval = SigmaAI.evaluatePosition(Engine);
                 MenuSystem.updateEvalBar(initialEval);
 
@@ -1132,7 +1136,6 @@
                 this.updateHUD(); this.saveState();
 
                 if (State.turn !== State.playerColor) {
-                    // Small delay to simulate "thinking" visually
                     setTimeout(() => this.processAITurn(), 100);
                 }
             },
@@ -1172,10 +1175,8 @@
             processAITurn() {
                 if (State.gameState !== 'IDLE') return;
                 
-                // Depth 3 is sufficient for ~1500 Elo in JS without Workers (Responsive enough)
                 const depth = 3; 
                 
-                // Offload to slightly prevent complete UI freeze (though heavy search will freeze JS briefly)
                 setTimeout(() => {
                     const bestMove = SigmaAI.getBestMove(Engine, depth, State.turn);
                     if (bestMove) {
@@ -1269,10 +1270,10 @@
                     ctx.fillStyle = theme.coordColor;
                     ctx.font = `bold ${Math.max(10, cs * 0.15)}px Arial`;
                     ctx.textAlign = 'left'; ctx.textBaseline = 'top';
-                    if (vx === 0) { // Rank (1-8)
+                    if (vx === 0) { 
                         ctx.fillText(8 - y, px + 2, py + 2);
                     }
-                    if (vy === 7) { // File (a-h)
+                    if (vy === 7) { 
                         ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
                         ctx.fillText(String.fromCharCode(97 + x), px + cs - 2, py + cs - 2);
                     }
